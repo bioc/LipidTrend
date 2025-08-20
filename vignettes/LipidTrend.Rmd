@@ -19,18 +19,26 @@ knitr::opts_chunk$set(collapse=TRUE, comment="#>")
 ```
 
 # Introduction
-`LipidTrend` is an R package designed to identify significant differences in 
-lipidomic feature tendencies between groups. The package includes 3 main 
-functions:
+`LipidTrend` is an R package designed to identify statistically significant 
+differences in lipidomic feature-level trends between groups. It supports both 
+one-dimensional and two-dimensional analyses of continuous lipid features (e.g.,
+chain length, double bond count).
 
-1. **analyzeLipidRegion** – Performs statistical analysis to examine lipid 
-feature tendencies.
-2. **plotRegion1D** – Visualizes results for one-dimensional lipid features.
-3. **plotRegion2D** – Visualizes results for two-dimensional lipid features.
-    
-Additionally, several helper functions are available to facilitate the viewing 
-of result data in the return object. For more details, please refer to 
-[helper function section](#helper).
+The package includes three main functions:
+
+1. **analyzeLipidRegion()** – Performs the core statistical analysis to detect 
+lipid feature trends using Gaussian kernel smoothing.
+2. **plotRegion1D()** – Visualizes trend analysis results for one-dimensional 
+lipid features.
+3. **plotRegion2D()** – Visualizes trend analysis results for two-dimensional 
+lipid features.
+
+In addition to these core functions, several helper functions are available to 
+facilitate the exploration and extraction of results from the returned 
+`LipidTrendSE` object.
+
+For more details, please refer to the [Helper Functions section](#helper).
+
 
 # Installation 
 To install `LipidTrend`, ensure that you have R 4.5.0 or later installed 
@@ -65,20 +73,38 @@ library(LipidTrend)
 `LipidTrend` requires a SummarizedExperiment object as input data. It must 
 contain the following components:
 
-1. **Assay**: A matrix containing lipid abundance data, where rows represent 
-lipids and columns represent samples.
-
-2. **RowData**: A data frame of lipid features (e.g., double bond count, chain 
-length), where rows are lipids and columns are lipid features (limited to 
-1 or 2 columns). The order of lipids must match the abundance data.
-    * If RowData contains one column, a one-dimensional analysis will be 
-    performed.
-    * If RowData includes two columns, a two-dimensional analysis will be 
-    conducted.
+1. **Assay**: A numeric matrix representing lipid abundance values, 
+where each row corresponds to a lipid species and each column to a sample. 
+Please ensure the values meet the following requirements:
     
-3. **ColData**: A data frame containing group information, where rows represent 
-sample names and columns must include sample name, label name, and group, 
-arranged accordingly.
+    * Preprocessing required: Before using `LipidTrend`, the abundance data 
+    must undergo preprocessing to address missing or noisy values. This 
+    preprocessing should include filtering, imputation, and normalization.
+    * No transformation needed: Abundance values should not undergo any 
+    transformations (e.g., log or square root transformations) before analysis.
+    * Value constraints: Zero values are acceptable; however, missing values 
+    (NA) are not supported and must be handled during preprocessing.
+    
+2. **RowData**: A data frame containing lipid feature information 
+(e.g., double bond count, chain length, or other continuous variables), 
+where each row corresponds to a lipid species and each column to a 
+specific lipid feature.
+
+    * The number and order of rows must exactly match those in the abundance 
+    matrix (Assay).
+    * This component must include either one or two numeric feature columns:
+        * One column enables one-dimensional trend analysis.
+        * Two columns enable two-dimensional trend analysis.
+
+3. **ColData**: A data frame containing metadata for each sample.
+
+    * Each row must correspond to a sample, matching the column order of 
+    the Assay matrix.
+    * The columns are required to be arranged accordingly:
+        * `sample_name`: A unique identifier for each sample.
+        * `label_name`: A display name used for plotting or grouping.
+        * `group`: The experimental condition or biological group associated 
+        with each sample.
 
 If you are already familiar with constructing a SummarizedExperiment object, 
 you can skip the following section. Otherwise, refer to the example in the rest 
@@ -124,8 +150,8 @@ following requirements:
 2. All sample names must be unique.
 3. The sample names in the `sample_name` column must match those in the lipid 
 abundance data.
-4. The columns `sample_name`, `label_name`, and `group` must not contain NA 
-values.
+4. The columns `sample_name`, `label_name`, and `group` must not contain 
+missing values (NA).
 
 For example:
 ```{r groupInfo}
@@ -151,21 +177,55 @@ se_2D <- SummarizedExperiment::SummarizedExperiment(
 ```
 
 # Initiate `LipidTrend` workflow
-The workflow of `LipidTrend` is primarily divided into one-dimensional and 
-two-dimensional lipid feature analyses. The process begins with a 
-SummarizedExperiment object as input data and, after computation and plotting, 
-respectively, returns a statistical results data frame and plot.
+
+The `LipidTrend` workflow starts with a SummarizedExperiment object as input. 
+It supports both one-dimensional (1D) and two-dimensional (2D) lipid 
+features analyses.
+
+Based on the number of feature columns provided in the `rowData` (e.g., 
+chain length, double bond count), the function automatically performs 
+either 1D or 2D trend detection.
+
+After statistical computation and visualization, the workflow returns:
+
+* A result table summarizing statistical significance, fold change, and trend 
+direction.
+* One or more plots highlighting significant lipid regions with group-specific 
+abundance trends.
+
+This streamlined workflow enables researchers to identify structured lipidomic 
+patterns across feature dimensions with statistical rigor and biological 
+interpretability.
 
 We recommend using the `set.seed()` function before starting to ensure 
 stability in the permutation process during computation.
-```{r }
+
+```{r set_seed}
 set.seed(1234)
 ```
 
 ## One-dimensional analysis {#lipid1d}
-The one-dimensional analysis is applicable when the input data contains only a 
-single lipid characteristic. Let’s briefly view the structure of the example 
-input data.
+
+One-dimensional analysis is applied when the input dataset contains a single 
+continuous lipid feature, such as chain length or double bond count. 
+This approach is ideal when the biological question centers on one specific 
+biochemical property of lipids or when only one type of feature annotation 
+is available.
+
+Compared to two-dimensional analysis, the one-dimensional approach is more 
+straightforward to interpret and requires less data completeness. It is 
+particularly suitable in the following scenarios:
+
+* The study focuses on a specific lipid characteristic (e.g., elongation of 
+chain length or degree of desaturation).
+* Only one lipid feature (e.g., double bond count) is annotated or reliably 
+available in the dataset.
+* Visualizing lipid trends along a single axis sufficiently addresses the 
+biological hypothesis.
+
+To begin, we will first examine the structure of the example input data to 
+ensure it is correctly formatted for one-dimensional analysis.
+
 ```{r LipidTrend_1D}
 # load example data
 data("lipid_se_CL")
@@ -175,38 +235,109 @@ show(lipid_se_CL)
 ```
 
 ### Analyze lipid region
-This section calculate p-value of lipidomic features by permutation test.
-The test of region statistics smoothing with Gaussian kernel integrates
-neighbor's information and provides a stable testing result under small
-sample size.
+**Overview of Region-Based Trend Analysis**
 
-You can obtain separate results for even-chain and odd-chain lipids by 
-adequately configuring the variables `split_chain` and `chain_col.` 
+The `analyzeLipidRegion()` function performs region-based statistical analysis 
+of lipidomic features, integrating both marginal testing and permutation-based 
+smoothed testing to identify meaningful trends across continuous lipid features 
+(e.g., chain length, double bond).
 
-If `split_chain` is set to `TRUE`, the results will be divided into even-chain 
-and odd-chain lipids. By default, `split_chain` is set to `FALSE`; however, we 
-recommend setting it to TRUE for more meaningful biological insights.
+This two-stage approach enhances statistical power and robustness, especially in
+small-sample datasets:
+
+1. **Marginal Test**: Each lipid feature is first tested individually using 
+either a t-test (with glog10 transformation) or a Wilcoxon test. This step 
+yields a marginal statistic and a corresponding marginal p-value for each 
+feature.
+
+2. **Region-Based Permutation Test with Smoothing**: The resulting vector of 
+marginal statistics is then smoothed using a Gaussian kernel, which integrates 
+information from neighboring lipid features based on their similarity (e.g., 
+proximity in chain length). A smoothed statistic is computed for each lipid, 
+and an empirical p-value is derived via permutation testing by comparing the 
+observed statistic to a null distribution.
 
 **Note:**  
-- When `split_chain=TRUE`, you must specify the column name for chain 
-length in the `chain_col` variable.  
-- If `split_chain=FALSE`, then `chain_col` should be NULL.
+- If `test=t.test` (default), abundance values are internally transformed using 
+glog10 transformation before testing. <br>
+- If `test=Wilcoxon` test, due to its higher computational cost during repeated 
+permutations, it is recommended to set permute_time to fewer than 10,000 
+to maintain a reasonable runtime.<br>
+<br>
+
+**Split-Chain Analysis for Chain Length Features**
+
+To enhance the biological interpretability of chain length–related trends, 
+`split_chain` provides an option to analyze even-chain and odd-chain lipids 
+via the `split_chain` parameter separately.
+
+Enabling this option allows the function to separate lipids based on chain 
+length parity (even vs. odd) and perform region-based statistical testing 
+independently for each group. This is particularly beneficial when distinct 
+biosynthetic or regulatory patterns are expected between even- 
+and odd-chain lipid species.
+
+To activate this feature, configure the `split_chain` and `chain_col`
+parameters as follows:
+
+* If `split_chain=TRUE`:
+    * The function performs separate analyses for even- and odd-chain lipids.
+    * Specify the column name containing chain length information using 
+    the `chain_col` parameter.
+* If `split_chain=FALSE` (default):
+    * All lipids will be analyzed together without parity distinction.
+    * Set `chain_col=NULL`.
+    
+**Recommendation:**
+Set `split_chain=TRUE` when analyzing features such as chain length, as it 
+often leads to more meaningful biological insights.
+
+**Note:**  
+- If fewer than two lipids are present in either the even or odd group, 
+analysis for that group will be skipped, and a warning will be issued.<br>
+<br>
+
+**Abundance-Weighted vs. Unweighted Statistics**
+
+To reflect the biological importance of more abundant lipids, we provide an 
+option controlled by the `abund_weight` parameter, which allows for weighting 
+region statistics based on the average abundance of each lipid species.
+
+* When `abund_weight=TRUE` (default), the marginal test statistic is scaled by 
+each lipid’s normalized average abundance during the smoothing step. This 
+emphasizes biologically dominant signals while down-weighting low-abundance, 
+potentially noisy lipids.
+* When `abund_weight=FALSE`, all lipids are treated equally, regardless of 
+their abundance. In this case, the region statistic is calculated solely based 
+on test statistics and feature similarity.
+
+This flexibility allows users to choose between:
+
+* A weighted strategy that highlights strong, dominant lipid shifts 
+(recommended for most biological datasets).
+* An unweighted strategy that gives equal weight to all lipids, which may be 
+suitable for hypothesis-driven or targeted studies.
+
+**Note:**  
+- Abundance weighting is applied only during the smoothing and permutation 
+steps; it does not affect the initial marginal testing.
 
 ```{r countRegion1D}
 # run analyzeLipidRegion
 res1D <- analyzeLipidRegion(
-    lipid_se_CL, ref_group="sgCtrl", split_chain=TRUE,
-    chain_col="chain", radius=3, own_contri=0.5, permute_time=1000)
+    lipid_se_CL, ref_group="sgCtrl", split_chain=TRUE, 
+    chain_col="chain", radius=3, own_contri=0.5, test="t.test", 
+    abund_weight=TRUE, permute_time=1000)
 
 # view result summary 
 show(res1D)
 ```
 
-The `analyzeLipidRegion` function produces an extended SummarizedExperiment 
+The `analyzeLipidRegion()` function produces an extended SummarizedExperiment 
 object called `LipidTrendSE`. To facilitate result extraction, we offer several 
 helper functions that make viewing the resulting data frame easier. For more 
 information on these helper functions, please refer to 
-[helper function section](#helper).
+[Helper Functions section](#helper).
 
 ```{r Region1D_result}
 # view even chain result (first 5 lines)
@@ -217,13 +348,15 @@ head(odd_chain_result(res1D), 5)
 ```
 
 ### Result visualization
-This section utilizes the `LipidTrendSE` output from the `analyzeLipidRegion` 
-function to visualize the results. 
+This section demonstrates how to visualize the results from the `LipidTrendSE` 
+object returned by the `analyzeLipidRegion()` function.
 
-**Note**: 
-- If `split_chain` is set to TRUE, two plots will be generated: one for 
-even-chain lipids and another for odd-chain lipids. 
-- If `split_chain` is set to FALSE, only a single plot will be returned.
+**Note:**  
+- If `split_chain=TRUE` was set in `analyzeLipidRegion()`, two separate plots 
+will be generated: one for even-chain lipids, and one for odd-chain lipids.<br>
+- If `split_chain=FALSE`, only a single plot will be returned, showing all 
+lipids together.
+
 
 ```{r plotRegion1D}
 # plot result
@@ -231,7 +364,6 @@ plots <- plotRegion1D(res1D, p_cutoff=0.05, y_scale='identity')
 
 # even chain result
 plots$even_result
-
 # odd chain result
 plots$odd_result
 ```
@@ -239,23 +371,51 @@ plots$odd_result
 The visualization illustrates lipid trends and includes the following 
 components:
 
-1. **Blue/Red Ribbons** – Highlight significant regions of difference between 
-groups.
-2. **Points** – Display average abundance of each lipid across all samples.
+1. **Blue/Red Ribbons** – Highlight regions where the trend significantly 
+differs between groups, as determined by the smoothed permutation test.
+2. **Points** – Represent the mean abundance within each group (case vs. 
+control) for each lipid feature.
 
-**Color Interpretation**:
+**Color Interpretation:**
 
-* Red areas indicate higher abundance in case samples.
-* Blue areas indicate higher abundance in control samples.
+* Red regions indicate a significant increase in lipid abundance in the case 
+group compared to the control group.
+* Blue regions indicate a significant decrease in lipid abundance in the case 
+group compared to the control group.
+
+These visualizations highlight not only the magnitude of lipid abundance 
+changes but also the specific feature-level regions (e.g., chain length) 
+where group differences are most pronounced.
+
 
 ## Two-dimensional analysis {#lipid2d}
-The main difference between one-dimensional and two-dimensional analysis lies 
-in the provided lipid characteristics table. One-dimensional analysis focuses 
-on a single lipid feature, whereas two-dimensional analysis examines two lipid 
-features simultaneously. The two-dimensional approach is applicable when the 
-input data includes two lipid characteristics.
 
-Now, let’s take a quick look at the structure of the example input data.
+Two-dimensional analysis is applicable when the input dataset includes two 
+continuous lipid features, such as chain length, double bond count, or other 
+numeric lipid characteristics. Compared to one-dimensional analysis, 
+2D analysis enables the detection of more complex patterns by simultaneously 
+evaluating lipid trends across two biochemical axes.
+
+This method is particularly well-suited for the following scenarios:
+
+* The dataset contains two well-annotated lipid features suitable for trend 
+analysis (e.g., chain length, double bond, or other structural indices).
+* The biological question involves joint effects or interactions between 
+lipid properties—such as the enrichment of long-chain polyunsaturated species.
+* The objective is to identify localized regions within the 2D feature space 
+that contribute to group differences.
+* There is a need for more detailed and spatial visualization of 
+lipid trend patterns.
+
+Two-dimensional analysis provides a high-resolution map of lipid changes, 
+allowing for the identification of specific combinations of features (e.g., 
+long-chain saturated vs. short-chain unsaturated lipids) that may i
+ndicate pathway-level regulation.
+
+Let’s now take a quick look at the structure of the example input data 
+used for 2D analysis.
+
+
 ```{r LipidTrend_2D}
 # load example data
 data("lipid_se_2D")
@@ -265,56 +425,127 @@ show(lipid_se_2D)
 ```
 
 ### Analyze lipid region
-This section calculate p-value of lipidomic features by permutation test.
-The test of region statistics smoothing with Gaussian kernel integrates
-neighbor's information and provides a stable testing result under small
-sample size.
+**Overview of Region-Based Trend Analysis**
 
-You can obtain separate results for even-chain and odd-chain lipids by 
-adequately configuring the variables `split_chain` and `chain_col.` 
+The `analyzeLipidRegion()` function performs region-based statistical analysis 
+of lipidomic features, integrating both marginal testing and permutation-based 
+smoothed testing to identify meaningful trends across continuous lipid features 
+(e.g., chain length, double bond).
 
-If `split_chain` is set to `TRUE`, the results will be divided into even-chain 
-and odd-chain lipids. By default, `split_chain` is set to `FALSE`; however, we 
-recommend setting it to TRUE for more meaningful biological insights.
+This two-stage approach enhances statistical power and robustness, especially in
+small-sample datasets:
+
+1. **Marginal Test**: Each lipid feature is first tested individually using 
+either a t-test (with glog10 transformation) or a Wilcoxon test. This step 
+yields a marginal statistic and a corresponding marginal p-value for 
+each feature.
+
+2. **Region-Based Permutation Test with Smoothing**: The resulting vector of 
+marginal statistics is then smoothed using a Gaussian kernel, which integrates 
+information from neighboring lipid features based on their similarity (e.g., 
+proximity in chain length). A smoothed statistic is computed for each lipid, 
+and an empirical p-value is derived via permutation testing by comparing the 
+observed statistic to a null distribution.
 
 **Note:**  
-- When `split_chain=TRUE`, you must specify the column name for chain 
-length in the `chain_col` variable.  
-- If `split_chain=FALSE`, then `chain_col` should be NULL.
+- If `test=t.test` (default), abundance values are internally transformed using 
+glog10 transformation before testing. <br>
+- If `test=Wilcoxon` test, due to its higher computational cost during repeated 
+permutations, it is recommended to set permute_time to fewer than 10,000 
+to maintain a reasonable runtime.<br>
+<br>
+
+**Split-Chain Analysis for Chain Length Features**
+
+To enhance the biological interpretability of chain length–related trends, 
+`split_chain` provides an option to analyze even-chain and odd-chain lipids 
+via the `split_chain` parameter separately.
+
+Enabling this option allows the function to separate lipids based on chain 
+length parity (even vs. odd) and perform region-based statistical testing 
+independently for each group. This is particularly beneficial when distinct 
+biosynthetic or regulatory patterns are expected between even- 
+and odd-chain lipid species.
+
+To activate this feature, configure the `split_chain` and `chain_col`
+parameters as follows:
+
+* If `split_chain=TRUE`:
+    * The function performs separate analyses for even- and odd-chain lipids.
+    * Specify the column name containing chain length information using 
+    the `chain_col` parameter.
+* If `split_chain=FALSE` (default):
+    * All lipids will be analyzed together without parity distinction.
+    * Set `chain_col=NULL`.
+    
+**Recommendation:**
+Set `split_chain=TRUE` when analyzing features such as chain length, as it 
+often leads to more meaningful biological insights.
+
+**Note:**  
+- If fewer than two lipids are present in either the even or odd group, 
+analysis for that group will be skipped, and a warning will be issued.<br>
+<br>
+
+**Abundance-Weighted vs. Unweighted Statistics**
+
+To reflect the biological importance of more abundant lipids, we provide an 
+option controlled by the `abund_weight` parameter, which allows for weighting 
+region statistics based on the average abundance of each lipid species.
+
+* When `abund_weight=TRUE` (default), the marginal test statistic is scaled by 
+each lipid’s normalized average abundance during the smoothing step. This 
+emphasizes biologically dominant signals while down-weighting low-abundance, 
+potentially noisy lipids.
+* When `abund_weight=FALSE`, all lipids are treated equally, regardless of 
+their abundance. In this case, the region statistic is calculated solely based 
+on test statistics and feature similarity.
+
+This flexibility allows users to choose between:
+
+* A weighted strategy that highlights strong, dominant lipid shifts 
+(recommended for most biological datasets).
+* An unweighted strategy that gives equal weight to all lipids, which may be 
+suitable for hypothesis-driven or targeted studies.
+
+**Note:**  
+- Abundance weighting is applied only during the smoothing and permutation 
+steps; it does not affect the initial marginal testing.
+
 
 ```{r countRegion2D}
 # run analyzeLipidRegion
 res2D <- analyzeLipidRegion(
-    lipid_se_2D, ref_group="sgCtrl", split_chain=TRUE,
-    chain_col="Total.C", radius=3, own_contri=0.5, permute_time=1000,
-    abund_weight=TRUE)
+    lipid_se_2D, ref_group="sgCtrl", split_chain=TRUE, 
+    chain_col="Total.C", radius=3, own_contri=0.5, test="t.test", 
+    abund_weight=TRUE, permute_time=1000)
 
 # view result summary 
 show(res2D)
 ```
 
-The `analyzeLipidRegion` function produces an extended SummarizedExperiment 
+The `analyzeLipidRegion()` function produces an extended SummarizedExperiment 
 object called `LipidTrendSE`. To facilitate result extraction, we offer several 
 helper functions that make viewing the resulting data frame easier. For more 
 information on these helper functions, please refer to 
-[helper function section](#helper).
+[Helper Functions section](#helper).
 
 ```{r Region2D_result}
 # view even chain result (first 5 lines)
 head(even_chain_result(res2D), 5)
-
 # view odd chain result (first 5 lines)
 head(odd_chain_result(res2D), 5)
 ```
 
 ### Result visualization
-This section utilizes the `LipidTrendSE` output from the `analyzeLipidRegion` 
-function to visualize the results. 
+This section demonstrates how to visualize the results from the `LipidTrendSE` 
+object returned by the `analyzeLipidRegion()` function.
 
-**Note**: 
-- If `split_chain` is set to TRUE, two plots will be generated: one for 
-even-chain lipids and another for odd-chain lipids. 
-- If `split_chain` is set to FALSE, only a single plot will be returned.
+**Note:**  
+- If `split_chain=TRUE` was set in `analyzeLipidRegion()`, two separate plots 
+will be generated: one for even-chain lipids, and one for odd-chain lipids.<br>
+- If `split_chain=FALSE`, only a single plot will be returned, showing all 
+lipids together.
 
 ```{r LipidTrend_2D_plot}
 # plot result
@@ -322,44 +553,79 @@ plot2D <- plotRegion2D(res2D, p_cutoff=0.05)
 
 # even chain result
 plot2D$even_result
-
 # odd chain result
 plot2D$odd_result
 ```
 
-This plot visualizes two-dimensional lipid features, highlighting trends and 
-significant differences between case and control groups. 
+This plot visualizes two-dimensional lipid features, highlighting regional 
+trends and significant differences between case and control groups.
 
-The X-axis represents the total carbon chain length, while the Y-axis shows the 
-total double bond count. The color scale indicates the log2 fold-change (FC) 
-between the case and control groups: red regions indicate higher abundance in 
-case samples, whereas blue regions indicate higher abundance in control 
-samples. 
+The X- and Y-axes represent two continuous lipid characteristics (e.g., total 
+chain length and double bond count). Each point corresponds to a lipid, with 
+the color indicating its log₂ fold-change (log₂FC) between case and 
+control groups:
+* Red points indicate higher abundance in case samples.
+* Blue points indicate higher abundance in control samples.
 
-Circle size represents the average abundance level, with larger 
-circles indicating higher abundance. Red and blue outlines highlight regions 
-with significant differences between the case and control groups. Asterisks 
-(\*, \*\*, ***) signify levels of statistical significance, with more asterisks 
-representing greater significance.
+If `abund_weight=TRUE`, point size reflects the mean abundance of each lipid. 
+<br>
+If `abund_weight=FALSE`, all points are displayed with equal size.
 
-Through this visualization, you can identify lipidomic patterns and differences 
-across various lipid characteristics.
+Asterisks (\*, \*\*, ***) denote levels of statistical significance based on 
+the marginal test, with more asterisks representing stronger evidence.
+
+Colored outlines (red or blue) represent significant regions identified by 
+the smoothed region-based permutation test, which incorporates information 
+from neighboring lipids with similar feature values:
+* Red regions indicate a significant trend of increasing abundance 
+in case samples.
+* Blue regions indicate a significant trend of decreasing abundance 
+in case samples.
+
+This visualization enables detection of both individual lipid-level changes 
+and region-level patterns, providing biologically meaningful trends 
+across two lipid features.
+
 
 # Helper Functions – enhancing result viewing {#helper}
+## View Results
 `LipidTrend` provides 4 helper functions to enhance the viewing of the 
-`LipidTrendSE` object returned by `analyzeLipidRegion`:
+`LipidTrendSE` object returned by `analyzeLipidRegion()`:
 
-1. result – Returns the result data frame.
-2. even_chain_result – Returns the even-chain result data frame.
-3. odd_chain_result – Returns the odd-chain result data frame.
-4. show – Displays a summary of the `LipidTrendSE` object.
+1. `result()` – Returns the result data frame.
+2. `even_chain_result()` – Returns the even-chain result data frame.
+3. `odd_chain_result()` – Returns the odd-chain result data frame.
+4. `show()` – Displays a summary of the `LipidTrendSE` object.
 
-**Notes**:
+**Notes:**  
+- If `split_chain=TRUE`, use `even_chain_result()` and `odd_chain_result()` to 
+view the results separately. Otherwise, use `result()`.<br>
+- To extract `assay`, `rowData`, or `colData` from the `LipidTrendSE` object, 
+use functions from the `r Biocpkg("SummarizedExperiment")` package.
 
-* If `split_chain=TRUE`, use `even_chain_result` and `odd_chain_result` to 
-view the results separately. Otherwise, use `result`.
-* To extract assay, rowData, or colData from the `LipidTrendSE` object, use 
-functions from the `r Biocpkg("SummarizedExperiment")` package.
+## Interpreting the Result Table
+The result table contains the following columns:
+
+* **Feature columns (Total.C, Total.DB, etc.)**: Lipid feature values from the 
+input `rowData`, such as chain length or double bond count. Column names vary 
+depending on the input dataset.
+* **avg.abund**: Mean abundance of each lipid across all samples. For 
+one-dimensional analysis, may also include **avg.abund.ctrl** and 
+**avg.abund.case** for group-wise means.
+* **direction**: Indicates the sign of the smoothed statistic:
+    * "+" signifies an increasing trend in the case group.<br>
+    * "–" signifies a decreasing trend in the case group.
+* **smoothing.pval.BH**: Benjamini–Hochberg adjusted p-value from the 
+region-based permutation test.
+* **marginal.pval.BH**: Benjamini–Hochberg adjusted p-value from the marginal 
+test (per lipid).
+* **log2.FC**: Log₂ fold-change in lipid abundance between case and 
+control groups.
+* **significance**: Overall significance label based on the smoothed test and 
+FC direction:
+    * "Increase" – significant positive trend in the case group
+    * "Decrease" – significant negative trend in the case group
+    * "NS" – not significant
 
 # Session info
 ```{r sessionInfo, echo=FALSE}
