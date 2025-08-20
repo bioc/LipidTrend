@@ -1,6 +1,6 @@
 Package: LipidTrend
 Title: LipidTrend: Analysis and Visualization of Lipid Feature Tendencies
-Version: 0.99.1
+Version: 0.99.2
 Authors@R: c(
     person("Wei-Chung", "Cheng", email="chenglabomics@gmail.com", 
     role = c("aut","cre","cph"), comment = c(ORCID = "0000-0002-1229-4857")),
@@ -24,7 +24,7 @@ LazyData: FALSE
 biocViews: Software, Lipidomics, StatisticalMethod, DifferentialExpression, 
     Visualization
 Depends: R (>= 4.5.0)
-Imports: dplyr, ggnewscale, ggplot2, magrittr, methods, rlang, SummarizedExperiment
+Imports: dplyr, ggnewscale, ggplot2, magrittr, methods, rlang, SummarizedExperiment, MKmisc, matrixTests
 Suggests: BiocStyle, devtools, knitr, roxygen2, rmarkdown, testthat (>= 3.0.0), S4Vectors,
 Enhances: data.table, 
 VignetteBuilder: knitr
