@@ -5,6 +5,12 @@
 \alias{lipid_se_CL}
 \title{Example Dataset for one-dimensional data}
 \format{
+An object of class \code{SummarizedExperiment} with 29 rows and 6 columns.
+}
+\usage{
+data(lipid_se_CL)
+}
+\value{
 A \code{SummarizedExperiment} object with the following slots:
 \describe{
 \item{\code{colData}}{ A data frame with 6 observations on the following
@@ -13,9 +19,6 @@ A \code{SummarizedExperiment} object with the following slots:
 \item{\code{rowData}}{ A data frame with 29 observations on the following
 1 variables containing chain characteristic information}
 }
-}
-\usage{
-data(lipid_se_CL)
 }
 \description{
 Example Dataset for one-dimensional data

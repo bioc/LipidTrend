@@ -5,7 +5,7 @@
 \alias{char_table_CL}
 \title{Example lipid characteristics table for one-dimensional LipidTrend analysis}
 \format{
-A \code{data.frame} object of chain characteristics over 29 lipids
+An object of class \code{data.frame} with 29 rows and 1 columns.
 }
 \source{
 Tomoyuki Shiota et al. ,Hepatoviruses promote very-long-chain fatty
@@ -15,6 +15,9 @@ virus release. Sci Adv. 9(42):eadj4198
 }
 \usage{
 data(char_table_CL)
+}
+\value{
+A \code{data.frame} object of chain characteristics over 29 lipids
 }
 \description{
 Example lipid characteristics table for one-dimensional LipidTrend analysis

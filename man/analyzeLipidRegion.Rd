@@ -18,58 +18,83 @@ analyzeLipidRegion(
 }
 \arguments{
 \item{lipid_se}{A SummarizedExperiment object. Must contain following data:
-\describe{
-\item{Assay}{A matrix containing lipid abundance data, where rows
+\enumerate{
+\item{Assay: A matrix containing lipid abundance data, where rows
 represent lipids and columns represent samples.}
-\item{RowData}{A data frame of lipid features (e.g., double bond count,
+\item{RowData: A data frame of lipid features (e.g., double bond count,
 chain length), with rows as lipids and columns as lipid features (
 limited to 1 or 2 columns). The order of lipids must match the abundance
 data. If RowData contains one column, a one-dimensional analysis will
-be performed. If RowData includes two columns, a two-dimensional
+be performed. If \code{rowData} includes two columns, a two-dimensional
 analysis will be conducted.}
-\item{ColData}{A data frame containing group information, where rows
+\item{ColData: A data frame containing group information, where rows
 represent sample names and columns must include sample name, label name,
 and group, arranged accordingly.}
 }}
 
 \item{ref_group}{Character. Group name of the reference group. It must be
-one of the group names in the colData group column.}
+one of the group names in the \code{colData$group} column.}
 
-\item{split_chain}{Logical. If TRUE the results will split to shown by odd
-and even chain. Default is \code{FALSE}.}
+\item{split_chain}{Logical. If \code{TRUE} the results will split to shown by
+odd and even chain. Default is \code{FALSE}.}
 
-\item{chain_col}{Character. The column name of chain length. Set to NULL if
-split_chain is FALSE. Default is \code{'NULL'}.}
+\item{chain_col}{Character. The column name in \code{rowData} that specifies
+chain length. Must be provided if \code{split_chain=TRUE}, otherwise should
+be set to \code{NULL}. Default is \code{NULL}.}
 
-\item{radius}{Numeric. Distance of neighbor to be included.
-Default is \code{3}.}
+\item{radius}{Numeric. Distance of neighboring features to be included in
+the smoothing kernel. Default is \code{3}.}
 
-\item{own_contri}{Numeric. Proportion of own contribution.
-Default is \code{0.5}. To not over-emphasize the neighbor information,
-we suggest to choose a value from 0.5 to 1.}
+\item{own_contri}{Numeric. Proportion of self-contribution when smoothing.
+Default is \code{0.5}. Recommended range: 0.5–1 to avoid over-emphasizing
+neighbors.}
 
-\item{test}{String. Choose statistic test from "t.test" and "Wilcoxon".
-Default is \code{'t.test'}.}
+\item{test}{Character. Type of statistical test: either \code{"t.test"}
+or \code{"Wilcoxon"}. Default is \code{"t.test"}.}
 
-\item{abund_weight}{Logical. Consider the average abundance as the weight in
-the test statistic. Default is \code{TRUE}.}
+\item{abund_weight}{Logical. Whether to use average abundance as a weight
+in calculating the region-based smoothed statistic. When set to TRUE, lipid
+species with higher mean abundance contribute more to the smoothed trend.
+Default is \code{TRUE}.}
 
-\item{permute_time}{Integer. Permutation times. Default is \code{100000}.}
+\item{permute_time}{Integer. Number of permutations used to calculate
+empirical p-values in the region-based permutation test. Default is
+\code{100000}. For the Wilcoxon test (i.e., \code{test="Wilcoxon"}),
+we recommend setting \code{permute_time} to fewer than 10,000 to ensure
+reasonable runtime.}
 }
 \value{
 A LipidTrendSE object containing lipidomic feature testing result.
 }
 \description{
-Calculate p-value of lipidomic features by permutation test.
-The test of region statistics smoothing with Gaussian kernel integrates
-neighbor's information and provides a stable testing result under small
-sample size.
+Performs region-based statistical analysis to identify lipidomic trends
+between groups. This function applies a two-stage procedure:
+\enumerate{
+\item \bold{Marginal Test}:
+Each lipid feature is first tested individually using
+either a t-test (with glog10 transformation) or a Wilcoxon test to obtain
+marginal statistics and p-values.
+\item \bold{Region-Based Permutation Test with Smoothing}:
+Marginal statistics are smoothed using a Gaussian kernel that incorporates
+neighborhood information (e.g., proximity in chain length or double bond
+count). Statistical significance is assessed by comparing the smoothed
+statistic against a null distribution generated through permutation.
+}
+
+This approach enhances statistical robustness, especially for small-sample
+datasets. It supports both one-dimensional and two-dimensional analyses
+depending on the number of features provided in the input.
+
+The input must be a \code{SummarizedExperiment} object, and the output is a
+\code{LipidTrendSE} object, which can be used for result visualization or
+further downstream analysis.
 }
 \examples{
 data("lipid_se_CL")
 res_se <- analyzeLipidRegion(
     lipid_se=lipid_se_CL, ref_group="sgCtrl", split_chain=FALSE,
-    chain_col=NULL, radius=3, own_contri=0.5, permute_time=100)
+    chain_col=NULL, radius=3, own_contri=0.5, test="t.test",
+    abund_weight=TRUE, permute_time=100)
 }
 \seealso{
 \code{\link{plotRegion1D}} for one-dimensional visualization

@@ -5,8 +5,7 @@
 \alias{char_table_2D}
 \title{Example lipid characteristics table for two-dimensional LipidTrend analysis}
 \format{
-A \code{data.frame} object of total chain length and total double bond
-characteristics over 137 lipids
+An object of class \code{data.frame} with 137 rows and 2 columns.
 }
 \source{
 Tomoyuki Shiota et al. ,Hepatoviruses promote very-long-chain fatty
@@ -16,6 +15,10 @@ virus release. Sci Adv. 9(42):eadj4198
 }
 \usage{
 data(char_table_2D)
+}
+\value{
+A \code{data.frame} object of total chain length and total double bond
+characteristics over 137 lipids
 }
 \description{
 Example lipid characteristics table for two-dimensional LipidTrend analysis

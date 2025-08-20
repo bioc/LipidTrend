@@ -11,14 +11,21 @@ analyzeLipidRegion analysis results
 \section{Slots}{
 
 \describe{
-\item{\code{split_chain}}{Logical indicating whether chains were split by parity.
-When TRUE, results are stored in even_chain_result and odd_chain_result.
+\item{\code{split_chain}}{Logical. Indicates whether chains were split by
+parity (even vs. odd).
+When TRUE, results are stored in even_chain_result and
+odd_chain_result slots.
 When FALSE, results are stored in the result slot.}
 
 \item{\code{result}}{Data frame of analysis results (for non-split data)}
 
-\item{\code{even_chain_result}}{Data frame of results for even chains (when split)}
+\item{\code{even_chain_result}}{Data frame of results for even chains
+(when split_chain is TRUE)}
 
-\item{\code{odd_chain_result}}{Data frame of results for odd chains (when split)}
+\item{\code{odd_chain_result}}{Data frame of results for odd chains
+(when split_chain is TRUE)}
+
+\item{\code{abund_weight}}{Logical. Logical. Set to TRUE to incorporate average
+lipid abundance as a weight in the test statistic.}
 }}
 

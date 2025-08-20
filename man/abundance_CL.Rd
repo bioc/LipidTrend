@@ -5,7 +5,7 @@
 \alias{abundance_CL}
 \title{Example lipid abundance data for one-dimensional LipidTrend analysis}
 \format{
-A \code{matrix} object of lipid abundance with 29 lipids over 6 samples
+An object of class \code{matrix} (inherits from \code{array}) with 29 rows and 6 columns.
 }
 \source{
 Tomoyuki Shiota et al. ,Hepatoviruses promote very-long-chain fatty
@@ -15,6 +15,9 @@ virus release. Sci Adv. 9(42):eadj4198
 }
 \usage{
 data(abundance_CL)
+}
+\value{
+A \code{matrix} object of lipid abundance with 29 lipids over 6 samples
 }
 \description{
 Example lipid abundance data for one-dimensional LipidTrend analysis

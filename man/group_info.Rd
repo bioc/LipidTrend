@@ -5,8 +5,7 @@
 \alias{group_info}
 \title{Example group information table for LipidTrend analysis}
 \format{
-A \code{data.frame} object of sample name, lable name, and group name
-over 6 samples
+An object of class \code{data.frame} with 6 rows and 3 columns.
 }
 \source{
 Tomoyuki Shiota et al. ,Hepatoviruses promote very-long-chain fatty
@@ -16,6 +15,10 @@ virus release. Sci Adv. 9(42):eadj4198
 }
 \usage{
 data(group_info)
+}
+\value{
+A \code{data.frame} object of sample name, lable name, and group name
+over 6 samples
 }
 \description{
 Example group information table for LipidTrend analysis

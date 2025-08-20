@@ -13,7 +13,36 @@ even_chain_result(object)
 \item{object}{A LipidTrendSE object}
 }
 \value{
-A data frame containing even chain result or NULL
+A data frame containing even chain result. The result table includes
+the following columns:
+\enumerate{
+\item{Feature columns: Lipid feature values from the input \code{rowData},
+such as chain length or double bond count. Column names vary depending on
+input.}
+\item{avg.abund: Mean abundance of each lipid across all samples. For
+one-dimensional analysis, this may also include \code{avg.abund.ctrl} and
+\code{avg.abund.case} for group-wise means.}
+\item{direction: Sign of the smoothed statistic:
+\itemize{
+\item{+ : Trend increases in the case group.}
+\item{- : Trend decreases in the case group.}
+}
+}
+\item{smoothing.pval.BH: Benjamini–Hochberg adjusted p-value from the
+region-based permutation test.}
+\item{marginal.pval.BH: Benjamini–Hochberg adjusted p-value from the
+marginal test (per lipid).}
+\item{log2.FC: Log2 fold-change in abundance between case and control
+groups.}
+\item{significance: Overall significance label based on smoothed test and
+FC direction:
+\itemize{
+\item{Increase: Significant positive trend in case group.}
+\item{Decrease: Significant negative trend in case group.}
+\item{NS: Not significant.}
+}
+}
+}
 }
 \description{
 Get Even Chain Result from LipidTrendSE
