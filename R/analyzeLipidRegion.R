@@ -1,49 +1,77 @@
 #' @title Conduct statistical to analyze lipid features tendencies
-#' @description Calculate p-value of lipidomic features by permutation test.
-#' The test of region statistics smoothing with Gaussian kernel integrates
-#' neighbor's information and provides a stable testing result under small
-#' sample size.
+#' @description
+#' Performs region-based statistical analysis to identify lipidomic trends
+#' between groups. This function applies a two-stage procedure:
+#' \enumerate{
+#'      \item \bold{Marginal Test}:
+#'  Each lipid feature is first tested individually using
+#'  either a t-test (with glog10 transformation) or a Wilcoxon test to obtain
+#'  marginal statistics and p-values.
+#'      \item \bold{Region-Based Permutation Test with Smoothing}:
+#'  Marginal statistics are smoothed using a Gaussian kernel that incorporates
+#'  neighborhood information (e.g., proximity in chain length or double bond
+#'  count). Statistical significance is assessed by comparing the smoothed
+#'  statistic against a null distribution generated through permutation.
+#' }
+#'
+#' This approach enhances statistical robustness, especially for small-sample
+#' datasets. It supports both one-dimensional and two-dimensional analyses
+#' depending on the number of features provided in the input.
+#'
+#' The input must be a \code{SummarizedExperiment} object, and the output is a
+#' \code{LipidTrendSE} object, which can be used for result visualization or
+#' further downstream analysis.
 #' @param lipid_se A SummarizedExperiment object. Must contain following data:
-#' \describe{
-#'      \item{Assay}{A matrix containing lipid abundance data, where rows
+#' \enumerate{
+#'      \item{Assay: A matrix containing lipid abundance data, where rows
 #'      represent lipids and columns represent samples.}
-#'      \item{RowData}{A data frame of lipid features (e.g., double bond count,
+#'      \item{RowData: A data frame of lipid features (e.g., double bond count,
 #'      chain length), with rows as lipids and columns as lipid features (
 #'      limited to 1 or 2 columns). The order of lipids must match the abundance
 #'      data. If RowData contains one column, a one-dimensional analysis will
-#'      be performed. If RowData includes two columns, a two-dimensional
+#'      be performed. If \code{rowData} includes two columns, a two-dimensional
 #'      analysis will be conducted.}
-#'      \item{ColData}{A data frame containing group information, where rows
+#'      \item{ColData: A data frame containing group information, where rows
 #'      represent sample names and columns must include sample name, label name,
 #'      and group, arranged accordingly.}
 #' }
 #' @param ref_group Character. Group name of the reference group. It must be
-#' one of the group names in the colData group column.
-#' @param split_chain Logical. If TRUE the results will split to shown by odd
-#' and even chain. Default is \code{FALSE}.
-#' @param chain_col Character. The column name of chain length. Set to NULL if
-#' split_chain is FALSE. Default is \code{'NULL'}.
-#' @param radius Numeric. Distance of neighbor to be included.
-#' Default is \code{3}.
-#' @param own_contri Numeric. Proportion of own contribution.
-#' Default is \code{0.5}. To not over-emphasize the neighbor information,
-#' we suggest to choose a value from 0.5 to 1.
-#' @param test String. Choose statistic test from "t.test" and "Wilcoxon".
-#' Default is \code{'t.test'}.
-#' @param abund_weight Logical. Consider the average abundance as the weight in
-#' the test statistic. Default is \code{TRUE}.
-#' @param permute_time Integer. Permutation times. Default is \code{100000}.
+#' one of the group names in the \code{colData$group} column.
+#' @param split_chain Logical. If \code{TRUE} the results will split to shown by
+#'  odd and even chain. Default is \code{FALSE}.
+#' @param chain_col Character. The column name in \code{rowData} that specifies
+#' chain length. Must be provided if \code{split_chain=TRUE}, otherwise should
+#' be set to \code{NULL}. Default is \code{NULL}.
+#' @param radius Numeric. Distance of neighboring features to be included in
+#' the smoothing kernel. Default is \code{3}.
+#' @param own_contri Numeric. Proportion of self-contribution when smoothing.
+#' Default is \code{0.5}. Recommended range: 0.5–1 to avoid over-emphasizing
+#' neighbors.
+#' @param test Character. Type of statistical test: either \code{"t.test"}
+#' or \code{"Wilcoxon"}. Default is \code{"t.test"}.
+#' @param abund_weight Logical. Whether to use average abundance as a weight
+#' in calculating the region-based smoothed statistic. When set to TRUE, lipid
+#' species with higher mean abundance contribute more to the smoothed trend.
+#' Default is \code{TRUE}.
+#' @param permute_time Integer. Number of permutations used to calculate
+#' empirical p-values in the region-based permutation test. Default is
+#' \code{100000}. For the Wilcoxon test (i.e., \code{test="Wilcoxon"}),
+#' we recommend setting \code{permute_time} to fewer than 10,000 to ensure
+#' reasonable runtime.
 #' @importFrom magrittr %>%
 #' @importFrom magrittr %<>%
 #' @importFrom SummarizedExperiment assay rowData colData
 #' @importFrom stats pt p.adjust
 #' @importFrom dplyr mutate
+#' @importFrom matrixTests col_wilcoxon_twosample
+#' @importFrom MKmisc glog10
 #' @return A LipidTrendSE object containing lipidomic feature testing result.
 #' @examples
 #' data("lipid_se_CL")
 #' res_se <- analyzeLipidRegion(
 #'     lipid_se=lipid_se_CL, ref_group="sgCtrl", split_chain=FALSE,
-#'     chain_col=NULL, radius=3, own_contri=0.5, permute_time=100)
+#'     chain_col=NULL, radius=3, own_contri=0.5, test="t.test",
+#'     abund_weight=TRUE, permute_time=100)
 #' @export
 #' @seealso
 #' \code{\link{plotRegion1D}} for one-dimensional visualization
@@ -55,18 +83,23 @@ analyzeLipidRegion <- function(
         stop("Invalid lipid_se input.")
     }
     if (!is.numeric(radius) || radius <= 0) {
-        stop("radius must be a positive numeric value")
+        stop("radius must be a positive numeric value.")
     }
     if (!is.numeric(own_contri) || own_contri < 0 || own_contri > 1) {
-        stop("own_contri must be between 0 and 1")
+        stop("own_contri must be between 0 and 1.")
     }
     X <- assay(lipid_se) %>% t()
+    if (ncol(X) < 2) {
+        stop(
+            "Lipid characteristic (e.g., chain length, double bond) must ",
+            "contain at least two features.")
+    }
     X.info <- rowData(lipid_se) %>% as.data.frame()
     group_info <- colData(lipid_se) %>% as.data.frame()
     if (is.null(ref_group) || !(ref_group %in% group_info$group)) {
-        stop("ref_group must be one of the groups in colData group column")
+        stop("ref_group must be one of the groups in colData group column.")
     }
-    group_info %<>% dplyr::mutate(
+    group_info %<>% mutate(
         lipidTrend_group=ifelse(group_info$group==ref_group, 0, 1))
     group <- group_info$lipidTrend_group
     if (isTRUE(split_chain)) {
@@ -77,7 +110,7 @@ analyzeLipidRegion <- function(
             return(new(
                 "LipidTrendSE", lipid_se, split_chain=TRUE,
                 even_chain_result=output.df$even,
-                odd_chain_result=output.df$odd))
+                odd_chain_result=output.df$odd, abund_weight=abund_weight))
         } else {
             stop("chain_col is not present in the column name of rowData.")
         }
@@ -86,25 +119,13 @@ analyzeLipidRegion <- function(
             X, X.info, group, radius, own_contri, test, permute_time,
             abund_weight)
         return(new(
-            "LipidTrendSE", lipid_se, split_chain=FALSE, result=output.df))
+            "LipidTrendSE", lipid_se, split_chain=FALSE, result=output.df,
+            abund_weight=abund_weight))
     } else {
         stop("split_chain must be logical value.")
     }
 }
 
-#' @title Process Split Chain Analysis
-#' @description Helper function to analyze even and odd chain lipids separately
-#' @param X Matrix. Lipid abundance data matrix.
-#' @param X.info Data frame. Lipid feature information.
-#' @param group Vector. Group assignments.
-#' @param chain_col Column name for chain length
-#' @param radius Numeric. Distance of neighbor to include.
-#' @param own_contri Numeric. Proportion of own contribution.
-#' @param test Character. Statistical test to use.
-#' @param permute_time Integer. Number of permutations.
-#' @param abund_weight Logical. Whether to use abundance weighting.
-#' @return A data frame with split chain results
-#' @keywords internal
 .analyzeSplitChain <- function(
         X, X.info, group, chain_col, radius, own_contri, test,
         permute_time, abund_weight) {
@@ -128,14 +149,6 @@ analyzeLipidRegion <- function(
     return(output.df)
 }
 
-#' @title Region Statistics Calculation
-#' @description Calculate region statistics using either t-test or Wilcoxon test
-#' @param X Matrix. Lipid abundance data matrix.
-#' @param Y Matrix. Group information matrix.
-#' @param test Character. Statistical test to use ("t.test" or "Wilcoxon").
-#' Default is "t.test".
-#' @return Numeric vector of statistical test results.
-#' @keywords internal
 .regionStat <- function(X, Y, test="t.test", ...){
     n1 <- sum(Y[,1])
     n2 <- sum(1-Y[,1])
@@ -153,31 +166,25 @@ analyzeLipidRegion <- function(
         res <- -log10(t.test.pval) * sign(t.stat)
     }
     if (test == "Wilcoxon") {
-        wilcox.pval <- apply(
-            Y, 2, function(y){apply(
-                X, 2, function(x) wilcox.test(
-                    x ~ y, alternative="two.sided")$p.value)
-            })
+        wilcox.pval <- apply(Y, 2, function(y) {
+            group1 <- X[y == 1, , drop=FALSE]
+            group2 <- X[y == 0, , drop=FALSE]
+            col_wilcoxon_twosample(
+                x=group1, y=group2, alternative="two.sided")$pvalue
+        })
         res <- -log10(wilcox.pval) * sign(mean.group1-mean.group2)
     }
     return(res)
 }
 
-#' @title Statistical Analysis for lipidTrend
-#' @description Perform statistical analysis for lipid trend data
-#' @param X Matrix. Lipid abundance data matrix.
-#' @param X.info Data frame. Lipid feature information.
-#' @param group Vector. Group assignments.
-#' @param radius Numeric. Distance of neighbor to include.
-#' @param own_contri Numeric. Proportion of own contribution.
-#' @param test Character. Statistical test to use.
-#' @param permute_time Integer. Number of permutations.
-#' @param abund_weight Logical. Whether to use abundance weighting.
-#' @return Data frame containing analysis results.
-#' @keywords internal
 .stat_lipidTrend <- function(
         X, X.info, group, radius, own_contri, test, permute_time, abund_weight){
-    region.stat.obs <- .regionStat(X=X, Y=as.matrix(group), test=test)
+    if (test == 't.test') {
+        glog.X <- glog10(X)
+        region.stat.obs <- .regionStat(X=glog.X, Y=as.matrix(group), test=test)
+    } else {
+        region.stat.obs <- .regionStat(X=X, Y=as.matrix(group), test=test)
+    }
     dis_res <- .countDistance(X.info)
     dist_input <- dis_res$normalized_matrix
     x.distance <- dis_res$x_distance
@@ -203,18 +210,6 @@ analyzeLipidRegion <- function(
     return(output.df)
 }
 
-#' @title Smooth Permutation Analysis
-#' @description Perform smooth permutation analysis for lipid trend data
-#' @param X Matrix. Lipid abundance data matrix.
-#' @param group Vector. Group assignments.
-#' @param dist.mat Matrix. Distance matrix.
-#' @param own_contri Numeric. Proportion of own contribution.
-#' @param test Character. Statistical test to use.
-#' @param abund_weight Logical. Whether to use abundance weighting.
-#' @param permute_time Integer. Number of permutations.
-#' @param region.stat.obs Numeric vector. Observed region statistics.
-#' @return List containing smooth statistics and permutation results.
-#' @keywords internal
 .smooth_permutation <- function(
         X, group, dist.mat, own_contri, test, abund_weight, permute_time,
         region.stat.obs) {
@@ -242,7 +237,12 @@ analyzeLipidRegion <- function(
     Y.permute <- vapply(
         seq_len(permute_time), function(x) sample(group, replace=FALSE),
         FUN.VALUE=numeric(length(group)))
-    region.stat.permute <- .regionStat(X=X, Y=Y.permute, test=test)
+    if (test == 't.test') {
+        glog.X <- glog10(X)
+        region.stat.permute <- .regionStat(X=glog.X, Y=Y.permute, test=test)
+    } else {
+        region.stat.permute <- .regionStat(X=X, Y=Y.permute, test=test)
+    }
     if (abund_weight) {
         smooth.stat.permute <- exp.dist %*% (region.stat.permute*avg.log.abund)
     } else {
@@ -252,21 +252,6 @@ analyzeLipidRegion <- function(
         smooth.stat=smooth.stat, smooth.stat.permute=smooth.stat.permute))
 }
 
-#' @title Summarize Results
-#' @description Summarize and format lipid trend analysis results
-#' @param X Matrix. Lipid abundance data matrix.
-#' @param X.info Data frame. Lipid feature information.
-#' @param group Vector. Group assignments.
-#' @param smooth.stat Numeric vector. Smoothed statistics.
-#' @param smooth.stat.permute Matrix. Permutation results.
-#' @param region.stat.obs Numeric vector. Observed region statistics.
-#' @param dimension Integer. Dimension of the analysis.
-#' @param permute_time Integer. Number of permutations performed.
-#' @param ... Additional arguments.
-#' @return Data frame containing formatted results.
-#' @importFrom dplyr mutate
-#' @importFrom stats p.adjust
-#' @keywords internal
 .resultSummary <- function(
         X, X.info, group, smooth.stat, smooth.stat.permute,
         region.stat.obs, dimension, permute_time, ...){
@@ -285,17 +270,22 @@ analyzeLipidRegion <- function(
     smooth.stat.pval.BH[FC.direction != direction] <- 1
     result <- data.frame(
         X.info, direction=direction, smoothing.pval.BH=smooth.stat.pval.BH,
-        marginal.pval.BH=marginal.pval.BH, log2.FC=log2.FC)
+        marginal.pval.BH=marginal.pval.BH, log2.FC=log2.FC) %>%
+        mutate(significance=ifelse(
+            smoothing.pval.BH < 0.05 & log2.FC > 0, 'Increase',
+            ifelse(smoothing.pval.BH < 0.05 & log2.FC < 0, 'Decrease', 'NS')))
     if (dimension == 2) {
         result %<>%
-            dplyr::mutate(avg.abund=colMeans(X), .before="direction")
+            mutate(avg.abund=colMeans(X), .before="direction")
     }
     if (dimension == 1) {
         result %<>%
-            dplyr::mutate(
+            mutate(
                 avg.abund.ctrl=colMeans(X[group == 0,]),
                 avg.abund.case=colMeans(X[group == 1,]),
                 .before="direction")
     }
     return(result)
 }
+
+

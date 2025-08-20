@@ -1,10 +1,3 @@
-#' Normalize Coordinate Matrix by Feature Distance
-#' @description Normalizes coordinates by dividing each dimension by its
-#' minimum distance
-#' @param dist_input Matrix or data.frame. Contains spatial coordinates.
-#' @return A list containing the normalized matrix and distance values for
-#' each dimension
-#' @keywords internal
 .countDistance <- function(dist_input) {
     dist_input <- as.matrix(dist_input)
     dim <- ncol(dist_input)

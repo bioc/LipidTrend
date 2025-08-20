@@ -2,7 +2,7 @@
 #'
 #' @docType data
 #' @usage data(lipid_se_CL)
-#' @format A `SummarizedExperiment` object with the following slots:
+#' @return A `SummarizedExperiment` object with the following slots:
 #' \describe{
 #'   \item{\code{colData}}{ A data frame with 6 observations on the following
 #'    3 variables, containing sample name, label name, and group name}
@@ -19,7 +19,7 @@
 #'
 #' @docType data
 #' @usage data(lipid_se_2D)
-#' @format A `SummarizedExperiment` object with the following slots:
+#' @return A `SummarizedExperiment` object with the following slots:
 #' \describe{
 #'   \item{\code{colData}}{ A data frame with 6 observations on the following
 #'    3 variables, containing sample name, label name, and group name}
@@ -37,7 +37,7 @@
 #'
 #' @docType data
 #' @usage data(abundance_CL)
-#' @format A `matrix` object of lipid abundance with 29 lipids over 6 samples
+#' @return A `matrix` object of lipid abundance with 29 lipids over 6 samples
 #'
 #' @source Tomoyuki Shiota et al. ,Hepatoviruses promote very-long-chain fatty
 #' acid and sphingolipid synthesis for viral RNA replication and quasi-enveloped
@@ -51,7 +51,7 @@
 #'
 #' @docType data
 #' @usage data(abundance_2D)
-#' @format A `matrix` object of lipid abundance with 137 lipids over 6 samples
+#' @return A `matrix` object of lipid abundance with 137 lipids over 6 samples
 #'
 #' @source Tomoyuki Shiota et al. ,Hepatoviruses promote very-long-chain fatty
 #' acid and sphingolipid synthesis for viral RNA replication and quasi-enveloped
@@ -65,7 +65,7 @@
 #'
 #' @docType data
 #' @usage data(char_table_CL)
-#' @format A `data.frame` object of chain characteristics over 29 lipids
+#' @return A `data.frame` object of chain characteristics over 29 lipids
 #'
 #' @source Tomoyuki Shiota et al. ,Hepatoviruses promote very-long-chain fatty
 #' acid and sphingolipid synthesis for viral RNA replication and quasi-enveloped
@@ -79,7 +79,7 @@
 #'
 #' @docType data
 #' @usage data(char_table_2D)
-#' @format A `data.frame` object of total chain length and total double bond
+#' @return A `data.frame` object of total chain length and total double bond
 #' characteristics over 137 lipids
 #'
 #' @source Tomoyuki Shiota et al. ,Hepatoviruses promote very-long-chain fatty
@@ -94,7 +94,7 @@
 #'
 #' @docType data
 #' @usage data(group_info)
-#' @format A `data.frame` object of sample name, lable name, and group name
+#' @return A `data.frame` object of sample name, lable name, and group name
 #' over 6 samples
 #'
 #' @source Tomoyuki Shiota et al. ,Hepatoviruses promote very-long-chain fatty

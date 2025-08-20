@@ -1,6 +1,35 @@
 #' @title Get Result from LipidTrendSE
 #' @param object A LipidTrendSE object
-#' @return A data frame containing analysis results or NULL
+#' @return A data frame containing analysis results. The result table includes
+#' the following columns:
+#' \enumerate{
+#'   \item{Feature columns: Lipid feature values from the input \code{rowData},
+#'   such as chain length or double bond count. Column names vary depending on
+#'   input.}
+#'   \item{avg.abund: Mean abundance of each lipid across all samples. For
+#'   one-dimensional analysis, this may also include \code{avg.abund.ctrl} and
+#'   \code{avg.abund.case} for group-wise means.}
+#'   \item{direction: Sign of the smoothed statistic:
+#'     \itemize{
+#'       \item{+ : Trend increases in the case group.}
+#'       \item{- : Trend decreases in the case group.}
+#'     }
+#'   }
+#'   \item{smoothing.pval.BH: Benjamini–Hochberg adjusted p-value from the
+#'   region-based permutation test.}
+#'   \item{marginal.pval.BH: Benjamini–Hochberg adjusted p-value from the
+#'   marginal test (per lipid).}
+#'   \item{log2.FC: Log2 fold-change in abundance between case and control
+#'   groups.}
+#'   \item{significance: Overall significance label based on smoothed test and
+#'   FC direction:
+#'     \itemize{
+#'       \item{Increase: Significant positive trend in case group.}
+#'       \item{Decrease: Significant negative trend in case group.}
+#'       \item{NS: Not significant.}
+#'     }
+#'   }
+#'}
 #' @examples
 #' data("lipid_se_CL")
 #' res_se <- analyzeLipidRegion(
@@ -19,7 +48,36 @@ setMethod("result", "LipidTrendSE", function(object) {
 
 #' @title Get Even Chain Result from LipidTrendSE
 #' @param object A LipidTrendSE object
-#' @return A data frame containing even chain result or NULL
+#' @return A data frame containing even chain result. The result table includes
+#' the following columns:
+#' \enumerate{
+#'   \item{Feature columns: Lipid feature values from the input \code{rowData},
+#'   such as chain length or double bond count. Column names vary depending on
+#'   input.}
+#'   \item{avg.abund: Mean abundance of each lipid across all samples. For
+#'   one-dimensional analysis, this may also include \code{avg.abund.ctrl} and
+#'   \code{avg.abund.case} for group-wise means.}
+#'   \item{direction: Sign of the smoothed statistic:
+#'     \itemize{
+#'       \item{+ : Trend increases in the case group.}
+#'       \item{- : Trend decreases in the case group.}
+#'     }
+#'   }
+#'   \item{smoothing.pval.BH: Benjamini–Hochberg adjusted p-value from the
+#'   region-based permutation test.}
+#'   \item{marginal.pval.BH: Benjamini–Hochberg adjusted p-value from the
+#'   marginal test (per lipid).}
+#'   \item{log2.FC: Log2 fold-change in abundance between case and control
+#'   groups.}
+#'   \item{significance: Overall significance label based on smoothed test and
+#'   FC direction:
+#'     \itemize{
+#'       \item{Increase: Significant positive trend in case group.}
+#'       \item{Decrease: Significant negative trend in case group.}
+#'       \item{NS: Not significant.}
+#'     }
+#'   }
+#' }
 #' @examples
 #' data("lipid_se_CL")
 #' sub <- lipid_se_CL[seq_len(10), ]
@@ -42,7 +100,36 @@ setMethod("even_chain_result", "LipidTrendSE", function(object) {
 
 #' @title Get Odd Chain Result from LipidTrendSE
 #' @param object A LipidTrendSE object
-#' @return A data frame containing odd chain result or NULL
+#' @return A data frame containing odd chain result. The result table includes
+#' the following columns:
+#' \enumerate{
+#'   \item{Feature columns: Lipid feature values from the input \code{rowData},
+#'   such as chain length or double bond count. Column names vary depending on
+#'   input.}
+#'   \item{avg.abund: Mean abundance of each lipid across all samples. For
+#'   one-dimensional analysis, this may also include \code{avg.abund.ctrl} and
+#'   \code{avg.abund.case} for group-wise means.}
+#'   \item{direction: Sign of the smoothed statistic:
+#'     \itemize{
+#'       \item{+ : Trend increases in the case group.}
+#'       \item{- : Trend decreases in the case group.}
+#'     }
+#'   }
+#'   \item{smoothing.pval.BH: Benjamini–Hochberg adjusted p-value from the
+#'   region-based permutation test.}
+#'   \item{marginal.pval.BH: Benjamini–Hochberg adjusted p-value from the
+#'   marginal test (per lipid).}
+#'   \item{log2.FC: Log2 fold-change in abundance between case and control
+#'   groups.}
+#'   \item{significance: Overall significance label based on smoothed test and
+#'   FC direction:
+#'     \itemize{
+#'       \item{Increase: Significant positive trend in case group.}
+#'       \item{Decrease: Significant negative trend in case group.}
+#'       \item{NS: Not significant.}
+#'     }
+#'   }
+#' }
 #' @examples
 #' data("lipid_se_CL")
 #' res_se <- analyzeLipidRegion(
@@ -63,19 +150,21 @@ setMethod("odd_chain_result", "LipidTrendSE", function(object) {
 })
 
 
-#' @title Get Split Chain Status from LipidTrendSE
-#' @param object A LipidTrendSE object
-#' @return Logical indicating if analysis was split by chain
-#' @keywords internal
 setGeneric(
     ".split_chain",
     function(object) standardGeneric(".split_chain"))
-
-#' @aliases .split_chain,LipidTrendSE-method
-#' @keywords internal
 setMethod(".split_chain", "LipidTrendSE", function(object) {
     object@split_chain
 })
+
+
+setGeneric(
+    ".abund_weight",
+    function(object) standardGeneric(".abund_weight"))
+setMethod(".abund_weight", "LipidTrendSE", function(object) {
+    object@abund_weight
+})
+
 
 #' @title Show method for LipidTrendSE objects
 #' @param object A LipidTrendSE object
