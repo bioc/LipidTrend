@@ -1,6 +1,6 @@
 Package: LipidTrend
 Title: LipidTrend: Analysis and Visualization of Lipid Feature Tendencies
-Version: 1.1.1
+Version: 1.2.0
 Authors@R: c(
     person("Wei-Chung", "Cheng", email="chenglabomics@gmail.com", 
     role = c("aut","cre","cph"), comment = c(ORCID = "0000-0002-1229-4857")),
