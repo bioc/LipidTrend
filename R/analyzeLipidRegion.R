@@ -64,7 +64,6 @@
 #' @importFrom stats pt p.adjust
 #' @importFrom dplyr mutate
 #' @importFrom matrixTests col_wilcoxon_twosample
-#' @importFrom MKmisc glog10
 #' @return A LipidTrendSE object containing lipidomic feature testing result.
 #' @examples
 #' data("lipid_se_CL")
@@ -180,7 +179,7 @@ analyzeLipidRegion <- function(
 .stat_lipidTrend <- function(
         X, X.info, group, radius, own_contri, test, permute_time, abund_weight){
     if (test == 't.test') {
-        glog.X <- glog10(X)
+        glog.X <- .glog10(X)
         region.stat.obs <- .regionStat(X=glog.X, Y=as.matrix(group), test=test)
     } else {
         region.stat.obs <- .regionStat(X=X, Y=as.matrix(group), test=test)
@@ -238,7 +237,7 @@ analyzeLipidRegion <- function(
         seq_len(permute_time), function(x) sample(group, replace=FALSE),
         FUN.VALUE=numeric(length(group)))
     if (test == 't.test') {
-        glog.X <- glog10(X)
+        glog.X <- .glog10(X)
         region.stat.permute <- .regionStat(X=glog.X, Y=Y.permute, test=test)
     } else {
         region.stat.permute <- .regionStat(X=X, Y=Y.permute, test=test)
