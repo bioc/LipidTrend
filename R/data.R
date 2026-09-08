@@ -1,8 +1,9 @@
-#' Example Dataset for one-dimensional data
+#' @title Example Dataset for one-dimensional data
 #'
 #' @docType data
+#' @name lipid_se_CL
 #' @usage data(lipid_se_CL)
-#' @return A `SummarizedExperiment` object with the following slots:
+#' @format A `SummarizedExperiment` object with the following slots:
 #' \describe{
 #'   \item{\code{colData}}{ A data frame with 6 observations on the following
 #'    3 variables, containing sample name, label name, and group name}
@@ -13,13 +14,14 @@
 #'
 #' @examples
 #' data(lipid_se_CL)
-"lipid_se_CL"
+NULL
 
-#' Example Dataset for two-dimensional data
+#' @title Example Dataset for two-dimensional data
 #'
 #' @docType data
+#' @name lipid_se_2D
 #' @usage data(lipid_se_2D)
-#' @return A `SummarizedExperiment` object with the following slots:
+#' @format A `SummarizedExperiment` object with the following slots:
 #' \describe{
 #'   \item{\code{colData}}{ A data frame with 6 observations on the following
 #'    3 variables, containing sample name, label name, and group name}
@@ -29,78 +31,77 @@
 #'   characteristic information}
 #' }
 #'
-#' @examples
-#' data(lipid_se_2D)
-"lipid_se_2D"
+#' @examples data(lipid_se_2D)
+NULL
 
-#' Example lipid abundance data for one-dimensional LipidTrend analysis
+#' @title Example lipid abundance data for one-dimensional LipidTrend analysis
 #'
 #' @docType data
+#' @name abundance_CL
 #' @usage data(abundance_CL)
-#' @return A `matrix` object of lipid abundance with 29 lipids over 6 samples
+#' @format A `matrix` object of lipid abundance with 29 lipids over 6 samples
 #'
 #' @source Tomoyuki Shiota et al. ,Hepatoviruses promote very-long-chain fatty
-#' acid and sphingolipid synthesis for viral RNA replication and quasi-enveloped
-#' virus release. Sci Adv. 9(42):eadj4198
+#' acid and sphingolipid synthesis for viral RNA replication and
+#' quasi-enveloped virus release. Sci Adv. 9(42):eadj4198
 #'  \url{https://www.science.org/doi/10.1126/sciadv.adj4198}.
-#' @examples
-#' data(abundance_CL)
-"abundance_CL"
+#' @examples data(abundance_CL)
+NULL
 
-#' Example lipid abundance data for two-dimensional LipidTrend analysis
+#' @title Example lipid abundance data for two-dimensional LipidTrend analysis
 #'
 #' @docType data
+#' @name abundance_2D
 #' @usage data(abundance_2D)
-#' @return A `matrix` object of lipid abundance with 137 lipids over 6 samples
+#' @format A `matrix` object of lipid abundance with 137 lipids over 6 samples
 #'
 #' @source Tomoyuki Shiota et al. ,Hepatoviruses promote very-long-chain fatty
-#' acid and sphingolipid synthesis for viral RNA replication and quasi-enveloped
-#' virus release. Sci Adv. 9(42):eadj4198
+#' acid and sphingolipid synthesis for viral RNA replication and
+#' quasi-enveloped virus release. Sci Adv. 9(42):eadj4198
 #'  \url{https://www.science.org/doi/10.1126/sciadv.adj4198}.
-#' @examples
-#' data(abundance_2D)
-"abundance_2D"
+#' @examples data(abundance_2D)
+NULL
 
-#' Example lipid characteristics table for one-dimensional LipidTrend analysis
+#' @title Example lipid characteristics table for one-dimensional LipidTrend
+#' analysis
 #'
 #' @docType data
+#' @name char_table_CL
 #' @usage data(char_table_CL)
-#' @return A `data.frame` object of chain characteristics over 29 lipids
-#'
+#' @format A `data.frame` object of chain characteristics over 29 lipids
 #' @source Tomoyuki Shiota et al. ,Hepatoviruses promote very-long-chain fatty
-#' acid and sphingolipid synthesis for viral RNA replication and quasi-enveloped
-#' virus release. Sci Adv. 9(42):eadj4198
+#' acid and sphingolipid synthesis for viral RNA replication and
+#' quasi-enveloped virus release. Sci Adv. 9(42):eadj4198
 #'  \url{https://www.science.org/doi/10.1126/sciadv.adj4198}.
-#' @examples
-#' data(char_table_CL)
-"char_table_CL"
+#' @examples data(char_table_CL)
+NULL
 
-#' Example lipid characteristics table for two-dimensional LipidTrend analysis
+#' @title Example lipid characteristics table for two-dimensional LipidTrend
+#' analysis
 #'
 #' @docType data
+#' @name char_table_2D
 #' @usage data(char_table_2D)
-#' @return A `data.frame` object of total chain length and total double bond
+#' @format A `data.frame` object of total chain length and total double bond
 #' characteristics over 137 lipids
-#'
 #' @source Tomoyuki Shiota et al. ,Hepatoviruses promote very-long-chain fatty
-#' acid and sphingolipid synthesis for viral RNA replication and quasi-enveloped
-#' virus release. Sci Adv. 9(42):eadj4198
+#' acid and sphingolipid synthesis for viral RNA replication and
+#' quasi-enveloped virus release. Sci Adv. 9(42):eadj4198
 #'  \url{https://www.science.org/doi/10.1126/sciadv.adj4198}.
-#' @examples
-#' data(char_table_2D)
-"char_table_2D"
+#' @examples data(char_table_2D)
+NULL
 
-#' Example group information table for LipidTrend analysis
+#' @title Example group information table for LipidTrend analysis
 #'
 #' @docType data
+#' @name group_info
 #' @usage data(group_info)
-#' @return A `data.frame` object of sample name, lable name, and group name
+#' @format A `data.frame` object of sample name, lable name, and group name
 #' over 6 samples
 #'
 #' @source Tomoyuki Shiota et al. ,Hepatoviruses promote very-long-chain fatty
 #' acid and sphingolipid synthesis for viral RNA replication and quasi-enveloped
 #' virus release. Sci Adv. 9(42):eadj4198
 #'  \url{https://www.science.org/doi/10.1126/sciadv.adj4198}.
-#' @examples
-#' data(group_info)
-"group_info"
+#' @examples data(group_info)
+NULL

@@ -1,7 +1,7 @@
 # Generalized logarithmic transformation with base 10
 # Implementation based on MKmisc::glog10
 .glog10 <- function(x) {
-    log(x + sqrt(x^2 + 1), base = 10) - log(2, base = 10)
+    log(x + sqrt(x^2 + 1), base=10) - log(2, base=10)
 }
 
 .countDistance <- function(dist_input) {

@@ -34,7 +34,7 @@
 #' data("lipid_se_CL")
 #' res_se <- analyzeLipidRegion(
 #'     lipid_se=lipid_se_CL, ref_group="sgCtrl", split_chain=FALSE,
-#'     chain_col=NULL, radius=3, own_contri=0.5, permute_time=100)
+#'     chain_col=NULL, radius=3, permute_time=100)
 #' # Get complete result
 #' results <- result(res_se)
 #' @export
@@ -83,7 +83,7 @@ setMethod("result", "LipidTrendSE", function(object) {
 #' sub <- lipid_se_CL[seq_len(10), ]
 #' res_se <- analyzeLipidRegion(
 #'     lipid_se=sub, ref_group="sgCtrl", split_chain=TRUE,
-#'     chain_col="chain", radius=3, own_contri=0.5, permute_time=100)
+#'     chain_col="chain", radius=3, permute_time=100)
 #' # Get complete result summary
 #' results <- even_chain_result(res_se)
 #' @export
@@ -134,7 +134,7 @@ setMethod("even_chain_result", "LipidTrendSE", function(object) {
 #' data("lipid_se_CL")
 #' res_se <- analyzeLipidRegion(
 #'     lipid_se=lipid_se_CL, ref_group="sgCtrl", split_chain=TRUE,
-#'     chain_col="chain", radius=3, own_contri=0.5, permute_time=100)
+#'     chain_col="chain", radius=3, permute_time=100)
 #' # Get complete result summary
 #' results <- odd_chain_result(res_se)
 #' @export
