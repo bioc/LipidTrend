@@ -21,7 +21,7 @@ knitr::opts_chunk$set(collapse=TRUE, comment="#>")
 # Introduction
 `LipidTrend` is an R package designed to identify statistically significant 
 differences in lipidomic feature-level trends between groups. It supports both 
-one-dimensional and two-dimensional analyses of continuous lipid features (e.g.,
+one-dimensional and two-dimensional analyses of lipid features (e.g.,
 chain length, double bond count).
 
 The package includes three main functions:
@@ -86,7 +86,7 @@ Please ensure the values meet the following requirements:
     (NA) are not supported and must be handled during preprocessing.
     
 2. **RowData**: A data frame containing lipid feature information 
-(e.g., double bond count, chain length, or other continuous variables), 
+(e.g., double bond count, chain length, or other numeric variables),
 where each row corresponds to a lipid species and each column to a 
 specific lipid feature.
 
@@ -206,8 +206,8 @@ set.seed(1234)
 
 ## One-dimensional analysis {#lipid1d}
 
-One-dimensional analysis is applied when the input dataset contains a single 
-continuous lipid feature, such as chain length or double bond count. 
+One-dimensional analysis is applied when the input dataset contains a single
+lipid feature, such as chain length or double bond count.
 This approach is ideal when the biological question centers on one specific 
 biochemical property of lipids or when only one type of feature annotation 
 is available.
@@ -239,7 +239,7 @@ show(lipid_se_CL)
 
 The `analyzeLipidRegion()` function performs region-based statistical analysis 
 of lipidomic features, integrating both marginal testing and permutation-based 
-smoothed testing to identify meaningful trends across continuous lipid features 
+smoothed testing to identify meaningful trends across lipid features
 (e.g., chain length, double bond).
 
 This two-stage approach enhances statistical power and robustness, especially in
@@ -326,7 +326,7 @@ steps; it does not affect the initial marginal testing.
 # run analyzeLipidRegion
 res1D <- analyzeLipidRegion(
     lipid_se_CL, ref_group="sgCtrl", split_chain=TRUE, 
-    chain_col="chain", radius=3, own_contri=0.5, test="t.test", 
+    chain_col="chain", radius=3, test="t.test",
     abund_weight=TRUE, permute_time=1000)
 
 # view result summary 
@@ -383,15 +383,22 @@ group compared to the control group.
 * Blue regions indicate a significant decrease in lipid abundance in the case 
 group compared to the control group.
 
-These visualizations highlight not only the magnitude of lipid abundance 
-changes but also the specific feature-level regions (e.g., chain length) 
+These visualizations highlight not only the magnitude of lipid abundance
+changes but also the specific feature-level regions (e.g., chain length)
 where group differences are most pronounced.
+
+**Note:**
+- These ribbons are shaded based on an independent region-level paired
+t-test (see the [Regional Test and Fold-Change section](#regionalTestFC)).
+The test needs more than 5 significant features in a direction to be
+reliable; when either direction has 5 or fewer, the whole figure falls
+back to shading by the smoothed permutation test alone.
 
 
 ## Two-dimensional analysis {#lipid2d}
 
-Two-dimensional analysis is applicable when the input dataset includes two 
-continuous lipid features, such as chain length, double bond count, or other 
+Two-dimensional analysis is applicable when the input dataset includes two
+lipid features, such as chain length, double bond count, or other
 numeric lipid characteristics. Compared to one-dimensional analysis, 
 2D analysis enables the detection of more complex patterns by simultaneously 
 evaluating lipid trends across two biochemical axes.
@@ -429,7 +436,7 @@ show(lipid_se_2D)
 
 The `analyzeLipidRegion()` function performs region-based statistical analysis 
 of lipidomic features, integrating both marginal testing and permutation-based 
-smoothed testing to identify meaningful trends across continuous lipid features 
+smoothed testing to identify meaningful trends across lipid features
 (e.g., chain length, double bond).
 
 This two-stage approach enhances statistical power and robustness, especially in
@@ -517,7 +524,7 @@ steps; it does not affect the initial marginal testing.
 # run analyzeLipidRegion
 res2D <- analyzeLipidRegion(
     lipid_se_2D, ref_group="sgCtrl", split_chain=TRUE, 
-    chain_col="Total.C", radius=3, own_contri=0.5, test="t.test", 
+    chain_col="Total.C", radius=3, test="t.test",
     abund_weight=TRUE, permute_time=1000)
 
 # view result summary 
@@ -560,7 +567,7 @@ plot2D$odd_result
 This plot visualizes two-dimensional lipid features, highlighting regional 
 trends and significant differences between case and control groups.
 
-The X- and Y-axes represent two continuous lipid characteristics (e.g., total 
+The X- and Y-axes represent two lipid characteristics (e.g., total
 chain length and double bond count). Each point corresponds to a lipid, with 
 the color indicating its log₂ fold-change (log₂FC) between case and 
 control groups:
@@ -582,9 +589,16 @@ in case samples.
 * Blue regions indicate a significant trend of decreasing abundance 
 in case samples.
 
-This visualization enables detection of both individual lipid-level changes 
-and region-level patterns, providing biologically meaningful trends 
+This visualization enables detection of both individual lipid-level changes
+and region-level patterns, providing biologically meaningful trends
 across two lipid features.
+
+**Note:**
+- These outlines are shaded based on an independent region-level paired
+t-test (see the [Regional Test and Fold-Change section](#regionalTestFC)).
+The test needs more than 5 significant features in a direction to be
+reliable; when either direction has 5 or fewer, the whole figure falls
+back to shading by the smoothed permutation test alone.
 
 
 # Helper Functions – enhancing result viewing {#helper}
@@ -621,11 +635,70 @@ region-based permutation test.
 test (per lipid).
 * **log2.FC**: Log₂ fold-change in lipid abundance between case and 
 control groups.
-* **significance**: Overall significance label based on the smoothed test and 
+* **significance**: Overall significance label based on the smoothed test and
 FC direction:
     * "Increase" – significant positive trend in the case group
     * "Decrease" – significant negative trend in the case group
     * "NS" – not significant
+
+## Regional Test and Fold-Change {#regionalTestFC}
+While `smoothing.pval.BH` already provides a permutation-based significance
+call for each region, an independent, more directly interpretable statistic
+is often useful for reporting or downstream review. `regionalTestFC()`
+supplements the `LipidTrendSE` result with a region-level paired t-test and
+fold-change summary for each trend direction (Increase / Decrease).
+
+For each direction, the significant features identified via
+`smoothing.pval.BH < p_cutoff` are treated as paired observations (feature
+= pairing unit), and a paired t-test is performed on their group-mean
+abundances.
+
+```{r regionalTestFC_1D}
+# region-level paired t-test and fold-change, even-chain result
+regionalTestFC(res1D)$even_result
+```
+
+The returned table has one row per direction:
+
+* **direction**: `"Increase"` or `"Decrease"`.
+* **n.features**: Number of significant features in that direction.
+* **regional.test.pval**: Paired t-test p-value on feature-wise group-mean
+abundance across the significant features. `NA` when `n.features <= 5` (a
+paired t-test on 5 or fewer pairs is too underpowered to be trustworthy);
+each direction is evaluated independently of the other.
+* **regional.FC** / **log2.regional.FC**: The regional fold-change, on the
+linear and log2 scale respectively (`regional.FC` = `2^log2.regional.FC`).
+This is the **median** fold-change across the significant features in that
+direction -- a median rather than a mean, so that a single extreme feature
+cannot dominate the summary of the region.
+
+**Note:**
+- If `split_chain=TRUE` in `analyzeLipidRegion()`, `regionalTestFC()`
+returns a list with `even_result`/`odd_result`, matching
+`even_chain_result()`/`odd_chain_result()`. Otherwise it returns a single
+data frame.<br>
+- `p_cutoff` here defines region membership (same role as elsewhere in the
+package); it does *not* threshold `regional.test.pval` itself, so the raw
+p-value is always reported for the caller to interpret.
+
+### Region validation in `plotRegion1D()` / `plotRegion2D()`
+`plotRegion1D()` and `plotRegion2D()` consult `regionalTestFC()`
+internally, and shade a direction only after its region-level paired
+t-test passes (`regional.test.pval < regional_p_cutoff`); an unvalidated
+direction is left unshaded. The paired t-test is only reliable with more
+than 5 significant features in a direction, so when either direction in a
+figure has 5 or fewer, there are too few features to run the test, and the
+whole figure falls back to shading by the smoothed permutation test alone
+(`smoothing.pval.BH < p_cutoff`) instead, so a single figure never mixes
+two different statistical criteria.
+
+**Note:**
+- `regional_p_cutoff` (default `0.05`) controls this validation step and is
+independent from `p_cutoff`, which only governs region membership.<br>
+- Because this depends on the data, re-running `plotRegion1D()`/
+`plotRegion2D()` on an existing `LipidTrendSE` object after upgrading may
+change the appearance of figures where a direction has more than 5
+significant features, even without any code changes.
 
 # Session info
 ```{r sessionInfo, echo=FALSE}
