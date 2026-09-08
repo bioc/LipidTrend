@@ -58,7 +58,7 @@ test_that("analyzeLipidRegion handles basic input correctly", {
     expect_no_error(
         result <- analyzeLipidRegion(
             lipid_se=se, ref_group="control", split_chain=FALSE, radius=3,
-            own_contri=0.5, permute_time=100)
+            permute_time=100)
     )
     expect_true(inherits(result, "LipidTrendSE"))
     expect_false(.split_chain(result))
@@ -74,7 +74,7 @@ test_that("analyzeLipidRegion handles split chain analysis", {
     expect_no_error(
         result <- analyzeLipidRegion(
             lipid_se=se, ref_group="control", split_chain=TRUE,
-            chain_col="chain", radius=3, own_contri=0.5,
+            chain_col="chain", radius=3,
             permute_time=100)
     )
     expect_true(.split_chain(result))
@@ -101,7 +101,7 @@ test_that("analyzeLipidRegion handles empty chain groups correctly", {
     expect_warning(
         analyzeLipidRegion(
             lipid_se=se_odd_only, ref_group="control", split_chain=TRUE,
-            chain_col="chain", radius=3, own_contri=0.5, permute_time=100)
+            chain_col="chain", radius=3, permute_time=100)
     )
     # Create the opposite case - only even chains
     feature_names_even <- as.character(seq(34, 34 + 2*(n_features-1), by = 2))
@@ -117,7 +117,7 @@ test_that("analyzeLipidRegion handles empty chain groups correctly", {
     expect_warning(
         analyzeLipidRegion(
             lipid_se=se_even_only, ref_group="control", split_chain=TRUE,
-            chain_col="chain", radius=3, own_contri=0.5, permute_time=100)
+            chain_col="chain", radius=3, permute_time=100)
     )
 })
 
@@ -155,22 +155,22 @@ test_that(".smooth_permutation handles edge cases", {
     region.stat.obs <- rnorm(5)
     expect_no_error(
         .smooth_permutation(
-            X, group, dist.mat, own_contri=0.1, test="t.test", abund_weight=TRUE,
+            X, group, dist.mat, test="t.test", abund_weight=TRUE,
             permute_time=100, region.stat.obs=region.stat.obs)
     )
     expect_no_error(
         .smooth_permutation(
-            X, group, dist.mat, own_contri=0.5, test="t.test",
+            X, group, dist.mat, test="t.test",
             abund_weight=FALSE, permute_time=100,
             region.stat.obs=region.stat.obs)
     )
     result <- .smooth_permutation(
-        X, group, dist.mat, own_contri=0.1, test="t.test", abund_weight=TRUE,
+        X, group, dist.mat, test="t.test", abund_weight=TRUE,
         permute_time=100, region.stat.obs=region.stat.obs)
     expect_true(all(is.finite(result$smooth.stat)))
     expect_true(all(is.finite(result$smooth.stat.permute)))
     result <- .smooth_permutation(
-        X, group, dist.mat, own_contri=0.5, test="t.test", abund_weight=FALSE,
+        X, group, dist.mat, test="t.test", abund_weight=FALSE,
         permute_time=100, region.stat.obs=region.stat.obs)
     expect_true(all(is.finite(result$smooth.stat)))
     expect_true(all(is.finite(result$smooth.stat.permute)))
@@ -207,32 +207,14 @@ test_that("analyzeLipidRegion handles invalid input formats", {
     expect_error(
         analyzeLipidRegion(
             lipid_se=se, ref_group="ctrl", split_chain=FALSE, chain_col=NULL,
-            radius=3, own_contri=0.5, permute_time=100),
+            radius=3, permute_time=100),
         "ref_group must be one of the groups in colData group column"
     )
     expect_error(
         analyzeLipidRegion(
             lipid_se=se, ref_group="control", split_chain=FALSE, chain_col=NULL,
-            radius=-1, own_contri=0.5, permute_time=100),
+            radius=-1, permute_time=100),
         "radius must be a positive numeric value"
-    )
-    expect_error(
-        analyzeLipidRegion(
-            lipid_se=se, ref_group="control", split_chain=FALSE, chain_col=NULL,
-            radius=3, own_contri=1.1, permute_time=100),
-        "own_contri must be between 0 and 1"
-    )
-})
-
-test_that("analyzeLipidRegion handles edge cases in own_contri parameter", {
-    se <- create_mock_se()
-    expect_no_error(
-        result <- analyzeLipidRegion(
-            lipid_se=se, ref_group="control", own_contri=0.01, permute_time=100)
-    )
-    expect_no_error(
-        result <- analyzeLipidRegion(
-            lipid_se=se, ref_group="control", own_contri=0.99, permute_time=100)
     )
 })
 
@@ -244,9 +226,20 @@ test_that(".smooth_permutation handles small radius_values", {
     radius_values <- 0.1
     expect_error(
         .smooth_permutation(
-            X, group, dist.mat * radius_values, own_contri=0.5, test="t.test",
+            X, group, dist.mat * radius_values, test="t.test",
             abund_weight=TRUE, permute_time=100,
             region.stat.obs=region.stat.obs),
-        "the 'own_contri' should smaller than "
+        "cannot be achieved with the current"
+    )
+})
+
+test_that("analyzeLipidRegion requires exactly 2 groups", {
+    se <- create_mock_se(n_samples=9)
+    colData(se)$group <- rep(c("a", "b", "c"), length.out=9)
+    expect_error(
+        analyzeLipidRegion(
+            se, ref_group="a", split_chain=FALSE, chain_col=NULL,
+            radius=3, permute_time=100),
+        "analyzeLipidRegion\\(\\) requires exactly 2 groups"
     )
 })

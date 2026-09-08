@@ -44,7 +44,7 @@ test_that("plotRegion2D creates valid plot", {
     rowData(se) <- row_data
     result <- analyzeLipidRegion(
         lipid_se=se, ref_group="control", split_chain=FALSE,
-        chain_col=NULL, radius=3, own_contri=0.5, permute_time=100)
+        chain_col=NULL, radius=3, permute_time=100)
     expect_no_error(plot <- plotRegion2D(result, p_cutoff=0.05))
     expect_true(inherits(plot, "ggplot"))
     # high regions
@@ -75,7 +75,7 @@ test_that("plotRegion2D handles split chain analysis correctly", {
     rowData(se_split) <- row_data
     result <- analyzeLipidRegion(
         lipid_se=se_split, ref_group="control", split_chain=TRUE,
-        chain_col="Total.C", radius=3, own_contri=0.5, permute_time=100)
+        chain_col="Total.C", radius=3, permute_time=100)
     # split chain
     expect_no_error(plot <- plotRegion2D(result, p_cutoff=0.05))
     expect_true(inherits(plot$even_result, "ggplot"))
@@ -85,6 +85,70 @@ test_that("plotRegion2D handles split chain analysis correctly", {
     even_results$smoothing.pval.BH <- 1
     attr(result, "even_chain_results") <- even_results
     expect_no_error(plot_partial <- plotRegion2D(result, p_cutoff=0.05))
+})
+
+# Builds a 5x5 grid dataset with a strong, engineered group difference so
+# that both the Increase and Decrease regions reliably end up with more
+# than 5 significant features -- this is what triggers plotRegion2D()'s new
+# paired-test-based shading branch (see regionalTestFC()). Plain
+# create_mock_se() noise does not reliably land on either side of that
+# n.features > 5 boundary, so it cannot be used to test this branch.
+create_strong_signal_se_2d <- function(n_samples=8) {
+    n_features <- 25
+    x_coords <- rep(seq_len(5), each=5)
+    y_coords <- rep(seq_len(5), times=5)
+    feature_names <- paste0("TG_", seq_len(n_features))
+    assay_data <- matrix(
+        rnorm(n_samples * n_features, mean=5, sd=0.3),
+        nrow=n_features, ncol=n_samples, dimnames=list(feature_names, NULL))
+    group <- rep(c("control", "case"), each=n_samples / 2)
+    case_idx <- which(group == "case")
+    assay_data[1:8, case_idx] <- assay_data[1:8, case_idx] + 3
+    assay_data[9:16, case_idx] <- assay_data[9:16, case_idx] - 3
+    row_data <- data.frame(
+        Total.C=x_coords, Total.DB=y_coords, row.names=feature_names)
+    col_data <- data.frame(
+        sample_name=paste0("s", seq_len(n_samples)),
+        label_name=paste0("l", seq_len(n_samples)), group=group,
+        row.names=paste0("s", seq_len(n_samples)))
+    SummarizedExperiment(
+        assays=list(abundance=assay_data), rowData=row_data, colData=col_data)
+}
+
+test_that("plotRegion2D switches to paired-test shading when both directions have >5 significant features", {
+    set.seed(42)
+    se <- create_strong_signal_se_2d()
+    result <- analyzeLipidRegion(
+        lipid_se=se, ref_group="control", split_chain=FALSE, chain_col=NULL,
+        radius=3, permute_time=500)
+    tab <- regionalTestFC(result)
+    # sanity check: the engineered signal really does clear the n>5 gate
+    expect_true(all(tab$n.features > 5))
+    decision <- .regionColorDecision(tab, 0.05)
+    expect_equal(unname(decision), unname(
+        tab$regional.test.pval[match(names(decision), tab$direction)] < 0.05))
+    expect_no_error(plot <- plotRegion2D(result, p_cutoff=0.05))
+    expect_true(inherits(plot, "ggplot"))
+})
+
+test_that("plotRegion2D's regional_p_cutoff independently controls the paired-test validation", {
+    set.seed(42)
+    se <- create_strong_signal_se_2d()
+    result <- analyzeLipidRegion(
+        lipid_se=se, ref_group="control", split_chain=FALSE, chain_col=NULL,
+        radius=3, permute_time=500)
+    tab <- regionalTestFC(result)
+    expect_true(all(tab$n.features > 5))
+    # derive cutoffs from the actual p-values so this doesn't depend on how
+    # extreme the engineered signal's p-values happen to be
+    strict_cutoff <- min(tab$regional.test.pval) / 100
+    loose_cutoff <- min(1, max(tab$regional.test.pval) * 10)
+    expect_true(all(!.regionColorDecision(tab, strict_cutoff)))
+    expect_true(all(.regionColorDecision(tab, loose_cutoff)))
+    expect_no_error(
+        plotRegion2D(result, p_cutoff=0.05, regional_p_cutoff=strict_cutoff))
+    expect_no_error(
+        plotRegion2D(result, p_cutoff=0.05, regional_p_cutoff=loose_cutoff))
 })
 
 test_that("plotRegion2D handles wall building correctly", {
@@ -98,7 +162,7 @@ test_that("plotRegion2D handles wall building correctly", {
     rowData(se) <- row_data
     result <- analyzeLipidRegion(
         lipid_se=se, ref_group="control", split_chain=FALSE, radius=3,
-        own_contri=0.5, permute_time=100)
+        permute_time=100)
     result_df <- result(result)
     result_df$direction <- rep(c("+", "-"), length.out=nrow(result_df))
     result_df$smoothing.pval.BH <- 0.01
@@ -140,7 +204,7 @@ test_that("plotRegion2D handles invalid inputs and edge cases", {
     se <- create_mock_se()
     result <- analyzeLipidRegion(
         lipid_se=se, ref_group="control", split_chain=FALSE, radius=3,
-        own_contri=0.5, permute_time=100)
+        permute_time=100)
     # invalid p_cutoff
     expect_error(
         plotRegion2D(result, p_cutoff=2),
@@ -154,6 +218,15 @@ test_that("plotRegion2D handles invalid inputs and edge cases", {
     expect_error(
         plotRegion2D(result, p_cutoff=0.05, log2FC_cutoff=-1),
         "log2FC_cutoff must be a positive numeric value"
+    )
+    # invalid regional_p_cutoff
+    expect_error(
+        plotRegion2D(result, regional_p_cutoff=-1),
+        "regional_p_cutoff must be a numeric value between 0 and 1"
+    )
+    expect_error(
+        plotRegion2D(result, regional_p_cutoff=2),
+        "regional_p_cutoff must be a numeric value between 0 and 1"
     )
     # invalid split chain status
     bad_result <- result
@@ -176,7 +249,7 @@ test_that("plotRegion2D handles irregular grids", {
     rowData(se) <- row_data
     result <- analyzeLipidRegion(
         lipid_se=se, ref_group="control", split_chain=FALSE, radius=3,
-        own_contri=0.5, permute_time=100)
+        permute_time=100)
     expect_no_error(plot <- plotRegion2D(result, p_cutoff=0.05))
     expect_true(inherits(plot, "ggplot"))
 })
