@@ -51,6 +51,7 @@ Useful links:
 
 Authors:
 \itemize{
+  \item Wei-Chung Cheng \email{chenglabomics@gmail.com} (\href{https://orcid.org/0000-0002-1229-4857}{ORCID}) [copyright holder]
   \item Chia-Hsin Liu [contributor]
   \item Pei-Chun Shen [contributor]
   \item Wen-Jen Lin [contributor]

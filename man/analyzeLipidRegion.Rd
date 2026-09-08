@@ -4,17 +4,9 @@
 \alias{analyzeLipidRegion}
 \title{Conduct statistical to analyze lipid features tendencies}
 \usage{
-analyzeLipidRegion(
-  lipid_se,
-  ref_group,
-  split_chain = FALSE,
-  chain_col = NULL,
-  radius = 3,
-  own_contri = 0.5,
-  test = "t.test",
-  abund_weight = TRUE,
-  permute_time = 1e+05
-)
+analyzeLipidRegion(lipid_se, ref_group, split_chain=FALSE,
+chain_col=NULL, radius=3, test="t.test", abund_weight=TRUE,
+permute_time=100000)
 }
 \arguments{
 \item{lipid_se}{A SummarizedExperiment object. Must contain following data:
@@ -45,10 +37,6 @@ be set to \code{NULL}. Default is \code{NULL}.}
 \item{radius}{Numeric. Distance of neighboring features to be included in
 the smoothing kernel. Default is \code{3}.}
 
-\item{own_contri}{Numeric. Proportion of self-contribution when smoothing.
-Default is \code{0.5}. Recommended range: 0.5–1 to avoid over-emphasizing
-neighbors.}
-
 \item{test}{Character. Type of statistical test: either \code{"t.test"}
 or \code{"Wilcoxon"}. Default is \code{"t.test"}.}
 
@@ -77,8 +65,11 @@ marginal statistics and p-values.
 \item \bold{Region-Based Permutation Test with Smoothing}:
 Marginal statistics are smoothed using a Gaussian kernel that incorporates
 neighborhood information (e.g., proximity in chain length or double bond
-count). Statistical significance is assessed by comparing the smoothed
-statistic against a null distribution generated through permutation.
+count). The kernel weights a feature's own marginal statistic equally
+against its neighbors' (fixed 0.5 self-contribution, not user-adjustable,
+to prevent tuning this parameter toward a desired result). Statistical
+significance is assessed by comparing the smoothed statistic against a
+null distribution generated through permutation.
 }
 
 This approach enhances statistical robustness, especially for small-sample
@@ -93,7 +84,7 @@ further downstream analysis.
 data("lipid_se_CL")
 res_se <- analyzeLipidRegion(
     lipid_se=lipid_se_CL, ref_group="sgCtrl", split_chain=FALSE,
-    chain_col=NULL, radius=3, own_contri=0.5, test="t.test",
+    chain_col=NULL, radius=3, test="t.test",
     abund_weight=TRUE, permute_time=100)
 }
 \seealso{

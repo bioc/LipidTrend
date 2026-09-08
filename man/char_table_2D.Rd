@@ -3,27 +3,25 @@
 \docType{data}
 \name{char_table_2D}
 \alias{char_table_2D}
-\title{Example lipid characteristics table for two-dimensional LipidTrend analysis}
+\title{Example lipid characteristics table for two-dimensional LipidTrend
+analysis}
 \format{
-An object of class \code{data.frame} with 137 rows and 2 columns.
+A \code{data.frame} object of total chain length and total double bond
+characteristics over 137 lipids
 }
 \source{
 Tomoyuki Shiota et al. ,Hepatoviruses promote very-long-chain fatty
-acid and sphingolipid synthesis for viral RNA replication and quasi-enveloped
-virus release. Sci Adv. 9(42):eadj4198
+acid and sphingolipid synthesis for viral RNA replication and
+quasi-enveloped virus release. Sci Adv. 9(42):eadj4198
 \url{https://www.science.org/doi/10.1126/sciadv.adj4198}.
 }
 \usage{
 data(char_table_2D)
 }
-\value{
-A \code{data.frame} object of total chain length and total double bond
-characteristics over 137 lipids
-}
 \description{
-Example lipid characteristics table for two-dimensional LipidTrend analysis
+Example lipid characteristics table for two-dimensional LipidTrend
+analysis
 }
 \examples{
 data(char_table_2D)
 }
-\keyword{datasets}

@@ -5,12 +5,6 @@
 \alias{lipid_se_2D}
 \title{Example Dataset for two-dimensional data}
 \format{
-An object of class \code{SummarizedExperiment} with 137 rows and 6 columns.
-}
-\usage{
-data(lipid_se_2D)
-}
-\value{
 A \code{SummarizedExperiment} object with the following slots:
 \describe{
 \item{\code{colData}}{ A data frame with 6 observations on the following
@@ -21,10 +15,12 @@ A \code{SummarizedExperiment} object with the following slots:
 characteristic information}
 }
 }
+\usage{
+data(lipid_se_2D)
+}
 \description{
 Example Dataset for two-dimensional data
 }
 \examples{
 data(lipid_se_2D)
 }
-\keyword{datasets}

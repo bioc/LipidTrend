@@ -3,26 +3,24 @@
 \docType{data}
 \name{char_table_CL}
 \alias{char_table_CL}
-\title{Example lipid characteristics table for one-dimensional LipidTrend analysis}
+\title{Example lipid characteristics table for one-dimensional LipidTrend
+analysis}
 \format{
-An object of class \code{data.frame} with 29 rows and 1 columns.
+A \code{data.frame} object of chain characteristics over 29 lipids
 }
 \source{
 Tomoyuki Shiota et al. ,Hepatoviruses promote very-long-chain fatty
-acid and sphingolipid synthesis for viral RNA replication and quasi-enveloped
-virus release. Sci Adv. 9(42):eadj4198
+acid and sphingolipid synthesis for viral RNA replication and
+quasi-enveloped virus release. Sci Adv. 9(42):eadj4198
 \url{https://www.science.org/doi/10.1126/sciadv.adj4198}.
 }
 \usage{
 data(char_table_CL)
 }
-\value{
-A \code{data.frame} object of chain characteristics over 29 lipids
-}
 \description{
-Example lipid characteristics table for one-dimensional LipidTrend analysis
+Example lipid characteristics table for one-dimensional LipidTrend
+analysis
 }
 \examples{
 data(char_table_CL)
 }
-\keyword{datasets}

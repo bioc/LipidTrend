@@ -51,7 +51,7 @@ Get Odd Chain Result from LipidTrendSE
 data("lipid_se_CL")
 res_se <- analyzeLipidRegion(
     lipid_se=lipid_se_CL, ref_group="sgCtrl", split_chain=TRUE,
-    chain_col="chain", radius=3, own_contri=0.5, permute_time=100)
+    chain_col="chain", radius=3, permute_time=100)
 # Get complete result summary
 results <- odd_chain_result(res_se)
 }

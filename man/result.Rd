@@ -51,7 +51,7 @@ Get Result from LipidTrendSE
 data("lipid_se_CL")
 res_se <- analyzeLipidRegion(
     lipid_se=lipid_se_CL, ref_group="sgCtrl", split_chain=FALSE,
-    chain_col=NULL, radius=3, own_contri=0.5, permute_time=100)
+    chain_col=NULL, radius=3, permute_time=100)
 # Get complete result
 results <- result(res_se)
 }

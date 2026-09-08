@@ -5,19 +5,16 @@
 \alias{abundance_2D}
 \title{Example lipid abundance data for two-dimensional LipidTrend analysis}
 \format{
-An object of class \code{matrix} (inherits from \code{array}) with 137 rows and 6 columns.
+A \code{matrix} object of lipid abundance with 137 lipids over 6 samples
 }
 \source{
 Tomoyuki Shiota et al. ,Hepatoviruses promote very-long-chain fatty
-acid and sphingolipid synthesis for viral RNA replication and quasi-enveloped
-virus release. Sci Adv. 9(42):eadj4198
+acid and sphingolipid synthesis for viral RNA replication and
+quasi-enveloped virus release. Sci Adv. 9(42):eadj4198
 \url{https://www.science.org/doi/10.1126/sciadv.adj4198}.
 }
 \usage{
 data(abundance_2D)
-}
-\value{
-A \code{matrix} object of lipid abundance with 137 lipids over 6 samples
 }
 \description{
 Example lipid abundance data for two-dimensional LipidTrend analysis
@@ -25,4 +22,3 @@ Example lipid abundance data for two-dimensional LipidTrend analysis
 \examples{
 data(abundance_2D)
 }
-\keyword{datasets}

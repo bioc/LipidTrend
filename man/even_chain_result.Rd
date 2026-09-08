@@ -52,7 +52,7 @@ data("lipid_se_CL")
 sub <- lipid_se_CL[seq_len(10), ]
 res_se <- analyzeLipidRegion(
     lipid_se=sub, ref_group="sgCtrl", split_chain=TRUE,
-    chain_col="chain", radius=3, own_contri=0.5, permute_time=100)
+    chain_col="chain", radius=3, permute_time=100)
 # Get complete result summary
 results <- even_chain_result(res_se)
 }
