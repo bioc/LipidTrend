@@ -1,2 +1,16 @@
+Changes in version 1.3.1 (2026-08-24)
++ Breaking change: removed own_contri from analyzeLipidRegion(); self-
+  contribution is now fixed at 0.5.
++ Breaking change: analyzeLipidRegion() now requires exactly 2 groups.
++ Added regionalTestFC(): region-level paired t-test and fold-change for
+  the Increase/Decrease regions.
++ plotRegion1D()/plotRegion2D() now use regionalTestFC() to decide coloring
+  when both directions have >5 significant features; new regional_p_cutoff
+  argument (default 0.05) controls this.
+
+Changes in version 1.3.0
++ Removed the dependency on the MKmisc package.
++ Updated RoxygenNote from 7.3.2 to 7.3.3.
+
 Changes in version 0.99.0 (2025-02-25)
 + Submitted to Bioconductor
